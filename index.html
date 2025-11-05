@@ -1,0 +1,3591 @@
+
+<!doctype html>
+<html lang="pt-BR">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Controle de Tráfego</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #253d70 0%, #1e2a54 100%);
+      min-height: 100%;
+      padding: 2rem 1rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .login-container {
+      max-width: 450px;
+      margin: 0 auto;
+      margin-top: 8%;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 2rem;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .header .logo-icon {
+      width: 40px;
+      height: 40px;
+      fill: white;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    .header p {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin: 0;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      margin-bottom: 2rem;
+    }
+
+    .login-card {
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .login-card h2 {
+      color: #1e293b;
+      margin-bottom: 2rem;
+      font-size: 1.5rem;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 2rem;
+      margin-left: -1.5rem;
+      margin-right: -1.5rem;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 1rem;
+      border: none;
+      background: transparent;
+      color: #6b7280;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn:hover {
+      color: #374151;
+      background: #f9fafb;
+    }
+
+    .tab-btn.active {
+      color: #253d70;
+      border-bottom-color: #253d70;
+      background: #f8faff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Module Selection Styles */
+    .module-selection {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .module-card {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      position: relative;
+    }
+
+    .module-card:hover {
+      border-color: #253d70;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(37, 61, 112, 0.15);
+    }
+
+    .module-card.active {
+      border-color: #253d70;
+      background: #f0f4ff;
+      box-shadow: 0 8px 25px rgba(37, 61, 112, 0.2);
+    }
+
+    .module-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1rem;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .module-card.active .module-icon {
+      background: #253d70;
+      color: white;
+    }
+
+    .module-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+
+    .module-description {
+      font-size: 0.875rem;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    /* GPS Status Styles */
+    .gps-status {
+      background: #f0f9ff;
+      border: 1px solid #0ea5e9;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .gps-status.active {
+      display: block;
+    }
+
+    .gps-status.tracking {
+      background: #f0fdf4;
+      border-color: #22c55e;
+    }
+
+    .gps-status.error {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+
+    .gps-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .gps-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #0ea5e9;
+      animation: pulse 2s infinite;
+    }
+
+    .gps-indicator.tracking {
+      background: #22c55e;
+    }
+
+    .gps-indicator.error {
+      background: #ef4444;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .gps-text {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .gps-details {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    /* Route Confirmation Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-subtitle {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+
+    .route-summary {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .route-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .route-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .route-label {
+      color: #64748b;
+    }
+
+    .route-value {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    /* Offline Indicator */
+    .offline-indicator {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: #f59e0b;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: none;
+      z-index: 1001;
+      animation: slideIn 0.3s ease;
+    }
+
+    .offline-indicator.show {
+      display: block;
+    }
+
+    .sync-status {
+      background: #f0f9ff;
+      border: 1px solid #0ea5e9;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .sync-status.show {
+      display: block;
+    }
+
+    .sync-status.syncing {
+      background: #fef3c7;
+      border-color: #f59e0b;
+    }
+
+    .sync-status.success {
+      background: #f0fdf4;
+      border-color: #22c55e;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .form-group input, .form-group textarea {
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: #253d70;
+      box-shadow: 0 0 0 3px rgba(37, 61, 112, 0.1);
+    }
+
+    .form-group input:disabled {
+      background-color: #f9fafb;
+      color: #6b7280;
+    }
+
+    .form-group small {
+      color: #6b7280;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      display: block;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.875rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: #253d70;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #1e2a54;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 61, 112, 0.4);
+    }
+
+    .btn-secondary {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #dc2626;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-logout {
+      background: #6b7280;
+      color: white;
+      min-width: auto;
+      flex: none;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .btn-logout:hover:not(:disabled) {
+      background: #4b5563;
+    }
+
+    .btn-gps {
+      background: #0ea5e9;
+      color: white;
+    }
+
+    .btn-gps:hover:not(:disabled) {
+      background: #0284c7;
+    }
+
+    .btn-gps.active {
+      background: #22c55e;
+    }
+
+    .btn-gps.active:hover:not(:disabled) {
+      background: #16a34a;
+    }
+
+    .user-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+
+    .user-info span {
+      color: #374151;
+      font-weight: 600;
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .user-details .location {
+      font-size: 0.875rem;
+      color: #6b7280;
+      font-weight: normal;
+    }
+
+    .manager-profile {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .profile-photo-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .profile-photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #253d70 0%, #1e2a54 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      overflow: hidden;
+      border: 3px solid white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .profile-photo:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .photo-upload-btn {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #10b981;
+      border: 2px solid white;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-size: 0;
+    }
+
+    .photo-upload-btn:hover {
+      background: #059669;
+      transform: scale(1.1);
+    }
+
+    .photo-upload-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .table-header h2 {
+      font-size: 1.5rem;
+      color: #374151;
+      margin: 0;
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .table-actions .btn {
+      min-width: auto;
+      flex: none;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    thead {
+      background: #f9fafb;
+    }
+
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.875rem;
+      border-bottom: 2px solid #e5e7eb;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+
+    tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-pendente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-enviado {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-erro {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .module-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+
+    .module-manual {
+      background: #ddd6fe;
+      color: #5b21b6;
+    }
+
+    .module-auto {
+      background: #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    .checkbox-cell {
+      width: 40px;
+      text-align: center;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #9ca3af;
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1rem;
+      opacity: 0.5;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .toast.success {
+      border-left: 4px solid #10b981;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef4444;
+    }
+
+    .spinner {
+      border: 2px solid #f3f4f6;
+      border-top: 2px solid currentColor;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Dashboard Styles */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .dashboard-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-icon {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-content h3 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 0.25rem 0;
+    }
+
+    .dashboard-content p {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin: 0;
+      font-weight: 500;
+    }
+
+    /* Ranking Styles */
+    .ranking-container {
+      background: #f8fafc;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    .ranking-item {
+      display: grid;
+      grid-template-columns: 60px 1fr 150px 120px 80px 120px;
+      gap: 1rem;
+      padding: 1rem;
+      align-items: center;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .ranking-item:last-child {
+      border-bottom: none;
+    }
+
+    .ranking-header {
+      background: #1e293b;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .ranking-item:not(.ranking-header):hover {
+      background: white;
+    }
+
+    .ranking-position {
+      font-weight: 700;
+      font-size: 1.25rem;
+      text-align: center;
+    }
+
+    .ranking-position.gold {
+      color: #f59e0b;
+    }
+
+    .ranking-position.silver {
+      color: #6b7280;
+    }
+
+    .ranking-position.bronze {
+      color: #d97706;
+    }
+
+    .ranking-driver {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .ranking-location {
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+
+    .ranking-metric {
+      font-weight: 600;
+      color: #059669;
+    }
+
+    .ranking-reports {
+      text-align: center;
+      color: #374151;
+    }
+
+    .ranking-avg {
+      text-align: center;
+      color: #6366f1;
+      font-weight: 500;
+    }
+
+    /* Filter Styles */
+    .ranking-filters,
+    .table-filters {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-select {
+      padding: 0.5rem 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      background: white;
+      color: #374151;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #253d70;
+      box-shadow: 0 0 0 3px rgba(37, 61, 112, 0.1);
+    }
+
+    .empty-ranking {
+      text-align: center;
+      padding: 2rem;
+      color: #9ca3af;
+      grid-column: 1 / -1;
+    }
+
+    .btn-link {
+      background: none;
+      border: none;
+      color: #253d70;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .btn-link:hover {
+      color: #1e2a54;
+    }
+
+    /* Reports Controls Styles */
+    .reports-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .search-filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .export-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .export-buttons .btn {
+      min-width: auto;
+      flex: none;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem 0.5rem;
+      }
+
+      .container {
+        padding: 0 0.5rem;
+      }
+
+      .login-container {
+        margin-top: 4%;
+        padding: 0 0.5rem;
+      }
+
+      .header h1 {
+        font-size: 1.25rem;
+        flex-direction: row;
+        gap: 0.5rem;
+      }
+
+      .header .logo-icon {
+        width: 28px;
+        height: 28px;
+      }
+
+      .header p {
+        font-size: 0.875rem;
+      }
+
+      .card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .login-card {
+        padding: 1rem;
+      }
+
+      .module-selection {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .module-card {
+        padding: 1rem;
+      }
+
+      .module-icon {
+        width: 48px;
+        height: 48px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .button-group {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .btn {
+        min-width: auto;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+      }
+
+      .table-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+
+      .table-actions {
+        width: 100%;
+      }
+
+      .table-actions .btn {
+        flex: 1;
+        font-size: 0.875rem;
+      }
+
+      .user-info {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+        padding: 0.75rem;
+      }
+
+      .manager-profile {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+      }
+
+      .profile-photo {
+        width: 50px;
+        height: 50px;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+
+      .dashboard-card {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+      }
+
+      .dashboard-content h3 {
+        font-size: 1.5rem;
+      }
+
+      .ranking-item {
+        grid-template-columns: 30px 1fr 60px 50px;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        padding: 0.75rem;
+      }
+
+      .ranking-location,
+      .ranking-avg {
+        display: none;
+      }
+
+      .ranking-filters,
+      .table-filters {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .search-filters {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+
+      .export-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .export-buttons .btn {
+        width: 100%;
+      }
+
+      .reports-controls {
+        gap: 1rem;
+      }
+
+      .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      table {
+        min-width: 800px;
+      }
+
+      th, td {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+      }
+
+      .modal {
+        margin: 1rem;
+        padding: 1.5rem;
+        max-width: calc(100vw - 2rem);
+      }
+
+      .modal-title {
+        font-size: 1.125rem;
+      }
+
+      .route-summary {
+        padding: 0.75rem;
+      }
+
+      .tabs {
+        margin-left: -1rem;
+        margin-right: -1rem;
+      }
+
+      .tab-btn {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+      }
+
+      .gps-status {
+        padding: 0.75rem;
+      }
+
+      .toast {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.125rem;
+      }
+
+      .header .logo-icon {
+        width: 24px;
+        height: 24px;
+      }
+
+      .card {
+        padding: 0.75rem;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ranking-item {
+        grid-template-columns: 25px 1fr 50px;
+        gap: 0.25rem;
+        padding: 0.5rem;
+      }
+
+      .ranking-reports {
+        display: none;
+      }
+
+      .btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+      }
+
+      .form-group label {
+        font-size: 0.8125rem;
+      }
+
+      .form-group input,
+      .form-group textarea,
+      .filter-select {
+        padding: 0.625rem;
+        font-size: 0.875rem;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body><!-- Offline Indicator -->
+  <div id="offline-indicator" class="offline-indicator">
+   <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.07 2.93 1 9zM8.5 16.5a5 5 0 017 0M12 20h.01" />
+   </svg> Modo Offline
+  </div><!-- Responsible Modal -->
+  <div id="responsible-modal" class="modal-overlay hidden">
+   <div class="modal">
+    <div class="modal-header">
+     <h3 class="modal-title">Atesto de Responsabilidade</h3>
+     <p class="modal-subtitle">Informe o responsável da unidade que atesta as rotas selecionadas:</p>
+    </div>
+    <div class="form-group"><label for="responsible-name">Nome do Responsável</label> <input type="text" id="responsible-name" required placeholder="Ex: João Silva Santos"> <small>Nome completo do responsável pela unidade</small>
+    </div>
+    <div class="form-group"><label for="unit-type">Tipo de Unidade</label> <select id="unit-type" required> <option value="">Selecione o tipo de unidade</option> <option value="CRAS">CRAS - Centro de Referência de Assistência Social</option> <option value="CREAS">CREAS - Centro de Referência Especializado de Assistência Social</option> <option value="Conselho Tutelar">Conselho Tutelar</option> <option value="Outra Unidade">Outra Unidade</option> </select>
+    </div>
+    <div class="route-summary">
+     <div class="route-item"><span class="route-label">Registros selecionados:</span> <span class="route-value" id="selected-count">0</span>
+     </div>
+     <div class="route-item"><span class="route-label">Total de quilometragem:</span> <span class="route-value" id="selected-km">0 km</span>
+     </div>
+    </div>
+    <div class="button-group"><button class="btn btn-secondary" id="confirm-responsible-btn">
+      <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" />
+      </svg> Confirmar e Enviar </button> <button class="btn btn-danger" id="cancel-responsible-btn">
+      <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" />
+      </svg> Cancelar </button>
+    </div>
+   </div>
+  </div><!-- Route Confirmation Modal -->
+  <div id="route-modal" class="modal-overlay hidden">
+   <div class="modal">
+    <div class="modal-header">
+     <h3 class="modal-title">Confirmar Rota Percorrida</h3>
+     <p class="modal-subtitle">O sistema detectou o fim da sua viagem. Confirme os dados abaixo:</p>
+    </div>
+    <div class="route-summary">
+     <div class="route-item"><span class="route-label">Distância percorrida:</span> <span class="route-value" id="route-distance">0 km</span>
+     </div>
+     <div class="route-item"><span class="route-label">Duração da viagem:</span> <span class="route-value" id="route-duration">0 min</span>
+     </div>
+     <div class="route-item"><span class="route-label">Início:</span> <span class="route-value" id="route-start">Carregando...</span>
+     </div>
+     <div class="route-item"><span class="route-label">Destino:</span> <span class="route-value" id="route-end">Carregando...</span>
+     </div>
+    </div>
+    <div class="form-group"><label for="route-description">Descreva o destino da viagem:</label> <textarea id="route-description" placeholder="Ex: Deslocamento para o Grai Centro, Partida para a Beira Mar..."></textarea>
+    </div>
+    <div class="button-group"><button class="btn btn-secondary" id="confirm-route-btn">
+      <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" />
+      </svg> Confirmar Rota </button> <button class="btn btn-danger" id="cancel-route-btn">
+      <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" />
+      </svg> Cancelar </button>
+    </div>
+   </div>
+  </div><!-- Tela de Login -->
+  <div id="login-screen" class="login-container">
+   <div class="header">
+    <h1 id="page-title">
+     <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" height="40" width="40" viewbox="0 0 640 640" fill="white"><path d="M541.9 139.5C546.4 127.7 543.6 114.3 534.7 105.4C525.8 96.5 512.4 93.6 500.6 98.2L84.6 258.2C71.9 263 63.7 275.2 64 288.7C64.3 302.2 73.1 314.1 85.9 318.3L262.7 377.2L321.6 554C325.9 566.8 337.7 575.6 351.2 575.9C364.7 576.2 376.9 568 381.8 555.4L541.8 139.4z" />
+     </svg> Sistema de Controle de Tráfego</h1>
+    <p id="department-name">COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS</p>
+   </div>
+   <div class="card login-card"><!-- Abas de navegação -->
+    <div class="tabs"><button class="tab-btn active" id="login-tab" onclick="switchTab('login')">
+      <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M21 12H9" />
+      </svg> Login </button> <button class="tab-btn" id="register-tab" onclick="switchTab('register')">
+      <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12.5 7a4 4 0 11-8 0 4 4 0 018 0zM20 8v6M23 11h-6" />
+      </svg> Cadastrar-se </button>
+    </div><!-- Conteúdo do Login -->
+    <div id="login-content" class="tab-content active">
+     <h2 id="login-title">Acesso ao Sistema</h2>
+     <form id="login-form">
+      <div class="form-group"><label for="username">Nome do Condutor</label> <input type="text" id="username" required placeholder="Digite seu primeiro nome, primeiro e segundo nome, ou nome completo"> <small>Você pode usar o primeiro nome, primeiro e segundo nome, ou nome completo para fazer login</small>
+      </div>
+      <div class="form-group"><label for="password">Senha</label> <input type="password" id="password" required placeholder="Digite sua senha numérica">
+      </div><button type="submit" class="btn btn-primary" id="login-btn">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M21 12H9" />
+       </svg><span id="login-button-text">Entrar</span> </button>
+      <div style="text-align: center; margin-top: 1rem;"><button type="button" class="btn-link" id="forgot-password-btn" onclick="showForgotPassword()"> Esqueceu a senha? </button>
+      </div>
+     </form>
+    </div><!-- Conteúdo da Recuperação de Senha -->
+    <div id="forgot-password-content" class="tab-content">
+     <h2>Recuperar Senha</h2>
+     <form id="forgot-password-form">
+      <div class="form-group"><label for="recovery-name">Nome Completo do Condutor</label> <input type="text" id="recovery-name" required placeholder="Digite seu nome completo exatamente como cadastrado"> <small>Digite o nome completo exatamente como foi cadastrado no sistema</small>
+      </div><button type="submit" class="btn btn-secondary" id="recovery-btn">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg><span id="recovery-button-text">Recuperar Senha</span> </button>
+      <div style="text-align: center; margin-top: 1rem;"><button type="button" class="btn-link" onclick="backToLogin()"> Voltar ao Login </button>
+      </div>
+     </form>
+    </div><!-- Conteúdo do Cadastro -->
+    <div id="register-content" class="tab-content">
+     <h2 id="register-title">Cadastro de Condutor</h2>
+     <form id="register-form">
+      <div class="form-group"><label for="reg-name">Nome Completo do Condutor</label> <input type="text" id="reg-name" required placeholder="Digite seu nome completo">
+      </div>
+      <div class="form-group"><label for="reg-nickname">Apelido (opcional)</label> <input type="text" id="reg-nickname" placeholder="Como você gostaria de ser chamado"> <small>Se não informado, será usado o primeiro nome</small>
+      </div>
+      <div class="form-group"><label for="reg-location">Local de Lotação</label> <input type="text" id="reg-location" required placeholder="Ex: Garagem Central, Setor Norte, etc.">
+      </div>
+      <div class="form-group"><label for="reg-password">Senha Numérica (6 dígitos)</label> <input type="password" id="reg-password" required placeholder="Digite 6 números" maxlength="6" pattern="[0-9]{6}"> <small>A senha deve conter exatamente 6 números</small>
+      </div>
+      <div class="form-group"><label for="reg-password-confirm">Confirmar Senha</label> <input type="password" id="reg-password-confirm" required placeholder="Digite a senha novamente" maxlength="6" pattern="[0-9]{6}">
+      </div><button type="submit" class="btn btn-secondary" id="register-btn">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12.5 7a4 4 0 11-8 0 4 4 0 018 0z" />
+       </svg><span id="register-button-text">Cadastrar</span> </button>
+     </form>
+    </div>
+   </div>
+  </div><!-- Tela do Gestor -->
+  <div id="manager-screen" class="container hidden">
+   <div class="header">
+    <h1 id="manager-title">
+     <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" height="40" width="40" viewbox="0 0 640 640" fill="white"><path d="M541.9 139.5C546.4 127.7 543.6 114.3 534.7 105.4C525.8 96.5 512.4 93.6 500.6 98.2L84.6 258.2C71.9 263 63.7 275.2 64 288.7C64.3 302.2 73.1 314.1 85.9 318.3L262.7 377.2L321.6 554C325.9 566.8 337.7 575.6 351.2 575.9C364.7 576.2 376.9 568 381.8 555.4L541.8 139.4z" />
+     </svg> Dashboard Gerencial</h1>
+    <p id="manager-department">COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS</p>
+   </div>
+   <div class="card">
+    <div class="user-info">
+     <div class="manager-profile">
+      <div class="profile-photo-container">
+       <div class="profile-photo" id="manager-photo">
+        <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /> <circle cx="12" cy="7" r="4" />
+        </svg>
+       </div><button class="photo-upload-btn" id="upload-photo-btn">
+        <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /> <circle cx="12" cy="13" r="4" />
+        </svg></button> <input type="file" id="photo-input" accept="image/*" style="display: none;">
+      </div>
+      <div class="user-details"><span>Gestor: <strong id="manager-user">Welligton Ferreira</strong></span> <span class="location">Acesso Administrativo</span>
+      </div>
+     </div><button class="btn btn-logout" id="manager-logout-btn">
+      <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+      </svg> Sair </button>
+    </div><!-- Dashboard Cards -->
+    <div class="dashboard-grid">
+     <div class="dashboard-card">
+      <div class="dashboard-icon">
+       <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+       </svg>
+      </div>
+      <div class="dashboard-content">
+       <h3 id="total-reports">0</h3>
+       <p>Total de Reports</p>
+      </div>
+     </div>
+     <div class="dashboard-card">
+      <div class="dashboard-icon">
+       <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 6L9 17l-5-5" />
+       </svg>
+      </div>
+      <div class="dashboard-content">
+       <h3 id="sent-reports">0</h3>
+       <p>Reports Enviados</p>
+      </div>
+     </div>
+     <div class="dashboard-card">
+      <div class="dashboard-icon">
+       <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10" /> <path d="M12 6v6l4 2" />
+       </svg>
+      </div>
+      <div class="dashboard-content">
+       <h3 id="pending-reports">0</h3>
+       <p>Reports Pendentes</p>
+      </div>
+     </div>
+     <div class="dashboard-card">
+      <div class="dashboard-icon">
+       <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+       </svg>
+      </div>
+      <div class="dashboard-content">
+       <h3 id="total-km">0</h3>
+       <p>Total KM Rodados</p>
+      </div>
+     </div>
+    </div>
+   </div><!-- Ranking dos Condutores -->
+   <div class="card">
+    <div class="table-header">
+     <h2>Ranking de Condutores</h2>
+     <div class="ranking-filters"><select id="ranking-filter" class="filter-select"> <option value="km">Por KM Rodados</option> <option value="reports">Por Número de Reports</option> <option value="efficiency">Por Eficiência</option> </select> <button class="btn btn-secondary" id="export-ranking-btn">
+       <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+       </svg> Exportar Ranking </button>
+     </div>
+    </div>
+    <div class="ranking-container">
+     <div class="ranking-item ranking-header">
+      <div class="ranking-position">
+       #
+      </div>
+      <div class="ranking-driver">
+       Condutor
+      </div>
+      <div class="ranking-location">
+       Lotação
+      </div>
+      <div class="ranking-metric">
+       KM Total
+      </div>
+      <div class="ranking-reports">
+       Reports
+      </div>
+      <div class="ranking-avg">
+       Média KM/Report
+      </div>
+     </div>
+     <div id="ranking-list"><!-- Ranking items will be populated here -->
+     </div>
+    </div>
+   </div><!-- Relatórios Detalhados -->
+   <div class="card">
+    <div class="table-header">
+     <h2>Relatórios Detalhados</h2>
+     <div class="reports-controls">
+      <div class="search-filters"><input type="text" id="search-driver" class="filter-select" placeholder="Buscar por condutor..."> <input type="text" id="search-plate" class="filter-select" placeholder="Buscar por placa..."> <input type="date" id="date-from" class="filter-select"> <input type="date" id="date-to" class="filter-select">
+      </div>
+      <div class="export-buttons"><button class="btn btn-primary" id="export-pdf-btn">
+        <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /> <polyline points="14,2 14,8 20,8" /> <line x1="16" y1="13" x2="8" y2="13" /> <line x1="16" y1="17" x2="8" y2="17" /> <polyline points="10,9 9,9 8,9" />
+        </svg> Exportar PDF </button> <button class="btn btn-secondary" id="export-excel-btn">
+        <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /> <polyline points="14,2 14,8 20,8" /> <rect x="8" y="12" width="8" height="6" />
+        </svg> Exportar Excel </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Tabela Completa de Reports -->
+   <div class="card">
+    <div class="table-header">
+     <h2>Todos os Reports</h2>
+     <div class="table-filters"><select id="status-filter" class="filter-select"> <option value="all">Todos os Status</option> <option value="Enviado">Apenas Enviados</option> <option value="Pendente">Apenas Pendentes</option> </select> <select id="driver-filter" class="filter-select"> <option value="all">Todos os Condutores</option> </select> <select id="module-filter" class="filter-select"> <option value="all">Todos os Módulos</option> <option value="manual">Tráfego Manual</option> <option value="auto">Tráfego Automático</option> </select>
+     </div>
+    </div>
+    <div class="table-container">
+     <table>
+      <thead>
+       <tr>
+        <th>Condutor</th>
+        <th>Placa</th>
+        <th>Data</th>
+        <th>Destino</th>
+        <th>KM Inicial</th>
+        <th>KM Final</th>
+        <th>Distância</th>
+        <th>Status</th>
+        <th>Módulo</th>
+        <th>Lotação</th>
+        <th>Responsável</th>
+        <th>Unidade</th>
+       </tr>
+      </thead>
+      <tbody id="manager-records-tbody">
+       <tr>
+        <td colspan="12" class="empty-state">
+         <svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+         </svg><p>Nenhum registro encontrado</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+  </div><!-- Tela Principal -->
+  <div id="main-screen" class="container hidden">
+   <div class="header">
+    <h1 id="main-title">
+     <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" height="40" width="40" viewbox="0 0 640 640" fill="white"><path d="M541.9 139.5C546.4 127.7 543.6 114.3 534.7 105.4C525.8 96.5 512.4 93.6 500.6 98.2L84.6 258.2C71.9 263 63.7 275.2 64 288.7C64.3 302.2 73.1 314.1 85.9 318.3L262.7 377.2L321.6 554C325.9 566.8 337.7 575.6 351.2 575.9C364.7 576.2 376.9 568 381.8 555.4L541.8 139.4z" />
+     </svg> Controle de Tráfego Diário</h1>
+    <p id="main-department">COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS</p>
+   </div>
+   <div class="card">
+    <div class="user-info">
+     <div class="user-details"><span>Condutor: <strong id="logged-user"></strong></span> <span class="location" id="user-location"></span>
+     </div><button class="btn btn-logout" id="logout-btn">
+      <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+      </svg> Sair </button>
+    </div><!-- Sync Status -->
+    <div id="sync-status" class="sync-status">
+     <div class="gps-info">
+      <div class="gps-indicator"></div>
+      <div>
+       <div class="gps-text">
+        Sincronizando dados...
+       </div>
+       <div class="gps-details">
+        Enviando registros offline para o servidor
+       </div>
+      </div>
+     </div>
+    </div><!-- Module Selection -->
+    <div class="module-selection">
+     <div class="module-card active" id="manual-module" onclick="selectModule('manual')">
+      <div class="module-icon">
+       <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /> <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+       </svg>
+      </div>
+      <h3 class="module-title" id="manual-module-title">Tráfego Manual</h3>
+      <p class="module-description">Registre manualmente o destino antes de iniciar a viagem</p>
+     </div>
+     <div class="module-card" id="auto-module" onclick="selectModule('auto')">
+      <div class="module-icon">
+       <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /> <path d="M12 6v6l4 2" /> <path d="M16 8a6 6 0 016 6" />
+       </svg>
+      </div>
+      <h3 class="module-title" id="auto-module-title">Tráfego Automático (GPS)</h3>
+      <p class="module-description">Rastreamento automático por GPS com detecção de deslocamento</p>
+     </div>
+    </div><!-- GPS Status (for auto module) -->
+    <div id="gps-status" class="gps-status">
+     <div class="gps-info">
+      <div class="gps-indicator" id="gps-indicator"></div>
+      <div>
+       <div class="gps-text" id="gps-text">
+        Aguardando permissão de localização...
+       </div>
+       <div class="gps-details" id="gps-details">
+        O rastreamento iniciará automaticamente com deslocamento &gt; 20km
+       </div>
+      </div>
+     </div>
+    </div><!-- Manual Form -->
+    <div id="manual-form-container">
+     <form id="traffic-form">
+      <div class="form-grid">
+       <div class="form-group"><label for="condutor">Condutor</label> <input type="text" id="condutor" required disabled>
+       </div>
+       <div class="form-group"><label for="placa">Placa do Veículo</label> <input type="text" id="placa" required placeholder="ABC-1234">
+       </div>
+       <div class="form-group"><label for="data">Data</label> <input type="date" id="data" required>
+       </div>
+       <div class="form-group"><label for="destino">Destino</label> <input type="text" id="destino" required placeholder="Ex: Partida para a Beira Mar">
+       </div>
+       <div class="form-group"><label for="km-inicial">KM Inicial</label> <input type="number" id="km-inicial" required min="0" step="0.1">
+       </div>
+       <div class="form-group"><label for="km-final">KM Final</label> <input type="number" id="km-final" required min="0" step="0.1">
+       </div>
+      </div>
+      <div class="button-group"><button type="button" class="btn btn-primary" id="btn-send-direct">
+        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+        </svg><span id="text-send-direct">Enviar Direto</span> </button> <button type="button" class="btn btn-secondary" id="btn-add-queue">
+        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" />
+        </svg><span id="text-add-queue">Adicionar ao Resumo</span> </button>
+      </div>
+     </form>
+    </div><!-- Auto GPS Controls -->
+    <div id="auto-controls-container" class="hidden"><!-- GPS Permission Instructions -->
+     <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+      <h4 style="margin: 0 0 0.5rem 0; color: #1565c0; font-size: 0.875rem;">📍 Como permitir acesso à localização:</h4>
+      <div style="font-size: 0.8125rem; color: #1976d2; line-height: 1.4;">
+       <p style="margin: 0 0 0.5rem 0;"><strong>Chrome/Safari:</strong> Clique no ícone 🔒 na barra de endereço → Localização → Permitir</p>
+       <p style="margin: 0 0 0.5rem 0;"><strong>Firefox:</strong> Clique no ícone 🛡️ → Permissões → Localização → Permitir</p>
+       <p style="margin: 0;"><strong>Celular:</strong> Configurações → Privacidade → Localização → Navegador → Permitir</p>
+      </div>
+     </div>
+     <div class="button-group"><button class="btn btn-gps" id="btn-start-gps">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /> <path d="M12 6v6l4 2" />
+       </svg><span id="gps-btn-text">Iniciar Rastreamento GPS</span> </button> <button class="btn btn-danger hidden" id="btn-stop-gps">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" />
+       </svg> Parar Rastreamento </button>
+     </div>
+     <div class="form-group"><label for="auto-placa">Placa do Veículo (para rastreamento automático)</label> <input type="text" id="auto-placa" required placeholder="ABC-1234"> <small>Esta placa será usada para todos os registros automáticos</small>
+     </div>
+    </div>
+   </div>
+   <div class="card">
+    <div class="table-header">
+     <h2 id="table-title">Resumo de Reports</h2>
+     <div class="table-actions"><button class="btn btn-primary" id="btn-send-selected" disabled>
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+       </svg><span id="text-send-selected">Enviar Selecionados</span> </button> <button class="btn btn-danger" id="btn-clear-all">
+       <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+       </svg><span id="text-clear-all">Limpar Todos</span> </button>
+     </div>
+    </div>
+    <div class="table-container">
+     <table>
+      <thead>
+       <tr>
+        <th class="checkbox-cell"><input type="checkbox" id="select-all"></th>
+        <th>Condutor</th>
+        <th>Placa</th>
+        <th>Data</th>
+        <th>Destino</th>
+        <th>KM Inicial</th>
+        <th>KM Final</th>
+        <th>Distância</th>
+        <th>Status</th>
+        <th>Módulo</th>
+        <th>Responsável</th>
+       </tr>
+      </thead>
+      <tbody id="records-tbody">
+       <tr>
+        <td colspan="11" class="empty-state">
+         <svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+         </svg><p>Nenhum registro na fila</p></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      page_title: "Sistema de Controle de Tráfego",
+      department_name: "COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS",
+      login_title: "Acesso ao Sistema",
+      login_button: "Entrar",
+      register_title: "Cadastro de Condutor",
+      register_button: "Cadastrar",
+      manual_module_title: "Tráfego Manual",
+      auto_module_title: "Tráfego Automático (GPS)",
+      submit_direct_button: "Enviar Direto",
+      add_to_queue_button: "Adicionar ao Resumo",
+      table_title: "Resumo de Reports",
+      send_selected_button: "Enviar Selecionados",
+      clear_all_button: "Limpar Todos",
+      background_color: "#253d70",
+      card_color: "#ffffff",
+      text_color: "#1e293b",
+      primary_button_color: "#253d70",
+      secondary_button_color: "#10b981"
+    };
+
+    let allRecords = [];
+    let offlineRecords = [];
+    let isProcessing = false;
+    let currentUser = null;
+    let registeredUsers = {};
+    let selectedModule = 'manual';
+    let gpsTracking = false;
+    let gpsWatchId = null;
+    let currentPosition = null;
+    let trackingStartTime = null;
+    let trackingStartPosition = null;
+    let lastPosition = null;
+    let totalDistance = 0;
+    let isOnline = navigator.onLine;
+    let pendingRouteData = null;
+
+    // Usuários pré-cadastrados para teste
+    const preRegisteredUsers = {
+      "joão silva": { password: "123456", location: "Garagem Central", nickname: "João", type: "condutor" },
+      "maria santos": { password: "654321", location: "Setor Norte", nickname: "Maria", type: "condutor" },
+      "pedro oliveira": { password: "111222", location: "Base Sul", nickname: "Pedro", type: "condutor" },
+      "ana costa": { password: "333444", location: "Terminal Oeste", nickname: "Ana", type: "condutor" },
+      "carlos ferreira": { password: "555666", location: "Garagem Principal", nickname: "Carlos", type: "condutor" },
+      "welligton luis": { password: "020519", location: "Administração", nickname: "Welligton Ferreira", type: "gestor" }
+    };
+
+    // Inicializar com usuários pré-cadastrados
+    registeredUsers = { ...preRegisteredUsers };
+
+    // Simulação de dados locais sem SDK
+    function loadLocalData() {
+      const stored = localStorage.getItem('trafficRecords');
+      if (stored) {
+        allRecords = JSON.parse(stored);
+      }
+      renderTable();
+      updateSelectAllCheckbox();
+      
+      // Update manager dashboard if gestor is logged in
+      if (currentUser && currentUser.type === 'gestor') {
+        updateManagerDashboard();
+      }
+    }
+
+    function saveLocalData() {
+      localStorage.setItem('trafficRecords', JSON.stringify(allRecords));
+    }
+
+    async function onConfigChange(config) {
+      // Login screen
+      document.getElementById('page-title').textContent = config.page_title || defaultConfig.page_title;
+      document.getElementById('department-name').textContent = config.department_name || defaultConfig.department_name;
+      document.getElementById('login-title').textContent = config.login_title || defaultConfig.login_title;
+      document.getElementById('login-button-text').textContent = config.login_button || defaultConfig.login_button;
+      document.getElementById('register-title').textContent = config.register_title || defaultConfig.register_title;
+      document.getElementById('register-button-text').textContent = config.register_button || defaultConfig.register_button;
+
+      // Main screen
+      document.getElementById('main-title').textContent = config.page_title || defaultConfig.page_title;
+      document.getElementById('main-department').textContent = config.department_name || defaultConfig.department_name;
+      document.getElementById('manual-module-title').textContent = config.manual_module_title || defaultConfig.manual_module_title;
+      document.getElementById('auto-module-title').textContent = config.auto_module_title || defaultConfig.auto_module_title;
+      document.getElementById('text-send-direct').textContent = config.submit_direct_button || defaultConfig.submit_direct_button;
+      document.getElementById('text-add-queue').textContent = config.add_to_queue_button || defaultConfig.add_to_queue_button;
+      document.getElementById('table-title').textContent = config.table_title || defaultConfig.table_title;
+      document.getElementById('text-send-selected').textContent = config.send_selected_button || defaultConfig.send_selected_button;
+      document.getElementById('text-clear-all').textContent = config.clear_all_button || defaultConfig.clear_all_button;
+
+      const bgColor = config.background_color || defaultConfig.background_color;
+      const cardColor = config.card_color || defaultConfig.card_color;
+      const textColor = config.text_color || defaultConfig.text_color;
+      const primaryColor = config.primary_button_color || defaultConfig.primary_button_color;
+      const secondaryColor = config.secondary_button_color || defaultConfig.secondary_button_color;
+
+      document.body.style.background = `linear-gradient(135deg, ${bgColor} 0%, ${adjustColor(bgColor, -20)} 100%)`;
+      
+      document.querySelectorAll('.card').forEach(card => {
+        card.style.background = cardColor;
+      });
+
+      document.querySelectorAll('.form-group label, .table-header h2, th, .login-card h2, .user-info span').forEach(el => {
+        el.style.color = textColor;
+      });
+
+      document.querySelectorAll('.btn-primary').forEach(btn => {
+        btn.style.background = primaryColor;
+      });
+
+      document.querySelectorAll('.btn-secondary').forEach(btn => {
+        btn.style.background = secondaryColor;
+      });
+
+      document.querySelectorAll('.tab-btn.active').forEach(btn => {
+        btn.style.color = primaryColor;
+        btn.style.borderBottomColor = primaryColor;
+      });
+    }
+
+    function adjustColor(color, percent) {
+      const num = parseInt(color.replace("#", ""), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = (num >> 16) + amt;
+      const G = (num >> 8 & 0x00FF) + amt;
+      const B = (num & 0x0000FF) + amt;
+      return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+        (B < 255 ? B < 1 ? 0 : B : 255))
+        .toString(16).slice(1);
+    }
+
+    // Network status monitoring
+    window.addEventListener('online', () => {
+      isOnline = true;
+      document.getElementById('offline-indicator').classList.remove('show');
+      syncOfflineData();
+    });
+
+    window.addEventListener('offline', () => {
+      isOnline = false;
+      document.getElementById('offline-indicator').classList.add('show');
+    });
+
+    // GPS and Location Functions
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Earth's radius in kilometers
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    async function reverseGeocode(lat, lon) {
+      try {
+        // Simulated reverse geocoding - in real app, use a geocoding service
+        const locations = [
+          "Centro da Cidade", "Beira Mar", "Grai Centro", "Terminal Rodoviário",
+          "Shopping Center", "Aeroporto", "Porto", "Universidade", "Hospital Central",
+          "Zona Industrial", "Mercado Municipal", "Estádio", "Parque da Cidade"
+        ];
+        return locations[Math.floor(Math.random() * locations.length)];
+      } catch (error) {
+        return `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
+      }
+    }
+
+    function startGPSTracking() {
+      if (!navigator.geolocation) {
+        showToast('GPS não disponível neste dispositivo', 'error');
+        return;
+      }
+
+      // Verificar se estamos em HTTPS ou localhost (necessário para geolocalização)
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        updateGPSStatus('error', 'GPS requer conexão segura (HTTPS)');
+        showToast('Para usar o GPS, acesse o site via HTTPS', 'error');
+        return;
+      }
+
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 15000, // Aumentado para 15 segundos
+        maximumAge: 30000 // Reduzido para 30 segundos para dados mais frescos
+      };
+
+      updateGPSStatus('requesting', 'Solicitando permissão de localização...');
+
+      // Primeiro, tentar obter uma posição única para testar permissões
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Se conseguiu a primeira posição, iniciar o rastreamento contínuo
+          updateGPSStatus('waiting', 'Permissão concedida! Aguardando deslocamento...');
+          
+          gpsWatchId = navigator.geolocation.watchPosition(
+            handlePositionUpdate,
+            handlePositionError,
+            options
+          );
+        },
+        (error) => {
+          handlePositionError(error);
+        },
+        options
+      );
+    }
+
+    function handlePositionUpdate(position) {
+      currentPosition = position;
+      const { latitude, longitude } = position.coords;
+
+      if (!gpsTracking) {
+        // First position - check if we should start tracking
+        if (!trackingStartPosition) {
+          trackingStartPosition = { latitude, longitude };
+          trackingStartTime = Date.now();
+          updateGPSStatus('waiting', 'Aguardando deslocamento > 20km para iniciar rastreamento...');
+        } else {
+          const distance = calculateDistance(
+            trackingStartPosition.latitude,
+            trackingStartPosition.longitude,
+            latitude,
+            longitude
+          );
+
+          if (distance >= 20) {
+            // Start automatic tracking
+            gpsTracking = true;
+            lastPosition = trackingStartPosition;
+            totalDistance = distance;
+            updateGPSStatus('tracking', `Rastreamento ativo - ${distance.toFixed(1)}km percorridos`);
+            showToast('Rastreamento automático iniciado!', 'success');
+          }
+        }
+      } else {
+        // Update tracking
+        if (lastPosition) {
+          const segmentDistance = calculateDistance(
+            lastPosition.latitude,
+            lastPosition.longitude,
+            latitude,
+            longitude
+          );
+          totalDistance += segmentDistance;
+        }
+        
+        lastPosition = { latitude, longitude };
+        updateGPSStatus('tracking', `Rastreamento ativo - ${totalDistance.toFixed(1)}km percorridos`);
+
+        // Check for stop (simulated - in real app, use more sophisticated logic)
+        checkForTripEnd();
+      }
+    }
+
+    function handlePositionError(error) {
+      let message = 'Erro ao obter localização';
+      let details = '';
+      
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          message = 'Permissão de localização negada';
+          details = 'Vá em Configurações > Privacidade > Localização e permita o acesso para este site';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          message = 'Localização indisponível';
+          details = 'Verifique se o GPS está ativado e você está em área com sinal';
+          break;
+        case error.TIMEOUT:
+          message = 'Timeout na obtenção da localização';
+          details = 'Tente novamente em local com melhor sinal GPS';
+          break;
+      }
+      
+      updateGPSStatus('error', message, details);
+      showToast(message + '. ' + details, 'error');
+      
+      // Reset GPS button state
+      document.getElementById('btn-start-gps').classList.remove('hidden');
+      document.getElementById('btn-stop-gps').classList.add('hidden');
+    }
+
+    function updateGPSStatus(status, message, details = '') {
+      const gpsStatus = document.getElementById('gps-status');
+      const indicator = document.getElementById('gps-indicator');
+      const text = document.getElementById('gps-text');
+      const detailsEl = document.getElementById('gps-details');
+
+      gpsStatus.className = `gps-status active ${status}`;
+      indicator.className = `gps-indicator ${status}`;
+      text.textContent = message;
+      detailsEl.textContent = details || 'O rastreamento iniciará automaticamente com deslocamento > 20km';
+    }
+
+    function checkForTripEnd() {
+      // Simplified trip end detection - in real app, use more sophisticated logic
+      // For demo, we'll simulate trip end after 2 minutes of tracking
+      if (gpsTracking && trackingStartTime && (Date.now() - trackingStartTime) > 120000) {
+        endGPSTrip();
+      }
+    }
+
+    async function endGPSTrip() {
+      if (!gpsTracking || !trackingStartPosition || !lastPosition) return;
+
+      const duration = Math.round((Date.now() - trackingStartTime) / 60000); // minutes
+      const startLocation = await reverseGeocode(trackingStartPosition.latitude, trackingStartPosition.longitude);
+      const endLocation = await reverseGeocode(lastPosition.latitude, lastPosition.longitude);
+
+      pendingRouteData = {
+        distance: totalDistance,
+        duration: duration,
+        startLocation: startLocation,
+        endLocation: endLocation,
+        startCoords: `${trackingStartPosition.latitude},${trackingStartPosition.longitude}`,
+        endCoords: `${lastPosition.latitude},${lastPosition.longitude}`
+      };
+
+      // Show route confirmation modal
+      showRouteConfirmationModal();
+
+      // Reset tracking
+      gpsTracking = false;
+      trackingStartPosition = null;
+      trackingStartTime = null;
+      lastPosition = null;
+      totalDistance = 0;
+      
+      updateGPSStatus('waiting', 'Aguardando confirmação da rota...');
+    }
+
+    function showRouteConfirmationModal() {
+      if (!pendingRouteData) return;
+
+      document.getElementById('route-distance').textContent = `${pendingRouteData.distance.toFixed(1)} km`;
+      document.getElementById('route-duration').textContent = `${pendingRouteData.duration} min`;
+      document.getElementById('route-start').textContent = pendingRouteData.startLocation;
+      document.getElementById('route-end').textContent = pendingRouteData.endLocation;
+      document.getElementById('route-description').value = `Deslocamento de ${pendingRouteData.startLocation} para ${pendingRouteData.endLocation}`;
+
+      document.getElementById('route-modal').classList.remove('hidden');
+    }
+
+    function hideRouteConfirmationModal() {
+      document.getElementById('route-modal').classList.add('hidden');
+      document.getElementById('route-description').value = '';
+      pendingRouteData = null;
+    }
+
+    function showResponsibleModal(checkboxes) {
+      const selectedRecords = [];
+      let totalKm = 0;
+
+      checkboxes.forEach(checkbox => {
+        const recordId = checkbox.dataset.id;
+        const record = allRecords.find(r => r.__backendId === recordId);
+        // Verificar se o registro pertence ao usuário logado e está pendente
+        if (record && record.status === 'Pendente' && record.user_id === currentUser.name) {
+          selectedRecords.push(record);
+          totalKm += (record.km_final - record.km_inicial);
+        }
+      });
+
+      if (selectedRecords.length === 0) {
+        showToast('Nenhum registro válido selecionado', 'error');
+        return;
+      }
+
+      document.getElementById('selected-count').textContent = selectedRecords.length;
+      document.getElementById('selected-km').textContent = totalKm.toFixed(1) + ' km';
+      document.getElementById('responsible-modal').classList.remove('hidden');
+      
+      // Store selected records for later use
+      window.selectedRecordsForSending = selectedRecords;
+    }
+
+    function hideResponsibleModal() {
+      document.getElementById('responsible-modal').classList.add('hidden');
+      document.getElementById('responsible-name').value = '';
+      document.getElementById('unit-type').value = '';
+      window.selectedRecordsForSending = null;
+    }
+
+    async function confirmResponsible() {
+      const responsibleName = document.getElementById('responsible-name').value.trim();
+      const unitType = document.getElementById('unit-type').value;
+
+      if (!responsibleName || !unitType) {
+        showToast('Preencha todos os campos obrigatórios', 'error');
+        return;
+      }
+
+      if (!window.selectedRecordsForSending || window.selectedRecordsForSending.length === 0) {
+        showToast('Nenhum registro selecionado', 'error');
+        return;
+      }
+
+      isProcessing = true;
+      const btn = document.getElementById('confirm-responsible-btn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<div class="spinner"></div> Enviando...';
+      btn.disabled = true;
+
+      let successCount = 0;
+
+      // Simular delay de envio
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      for (const record of window.selectedRecordsForSending) {
+        // Encontrar o registro no array principal e atualizar
+        const index = allRecords.findIndex(r => r.__backendId === record.__backendId);
+        if (index !== -1) {
+          allRecords[index].status = 'Enviado';
+          allRecords[index].responsavel_unidade = responsibleName;
+          allRecords[index].tipo_unidade = unitType;
+          successCount++;
+        }
+      }
+
+      saveLocalData();
+      renderTable();
+      updateSelectAllCheckbox();
+      
+      if (currentUser && currentUser.type === 'gestor') {
+        updateManagerDashboard();
+      }
+
+      if (successCount > 0) {
+        showToast(`${successCount} registro(s) enviado(s) com atesto de ${responsibleName}!`, 'success');
+      }
+
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      isProcessing = false;
+      
+      hideResponsibleModal();
+    }
+
+    async function confirmRoute() {
+      if (!pendingRouteData) return;
+
+      const description = document.getElementById('route-description').value.trim();
+      if (!description) {
+        showToast('Por favor, descreva o destino da viagem', 'error');
+        return;
+      }
+
+      const autoPlaca = document.getElementById('auto-placa').value.trim();
+      if (!autoPlaca) {
+        showToast('Por favor, informe a placa do veículo', 'error');
+        return;
+      }
+
+      const routeRecord = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        __backendId: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        condutor: currentUser.displayName,
+        placa: autoPlaca.toUpperCase(),
+        data: new Date().toISOString().split('T')[0],
+        destino: description,
+        km_inicial: 0, // GPS tracking doesn't use traditional km readings
+        km_final: pendingRouteData.distance,
+        status: 'Enviado',
+        created_at: new Date().toISOString(),
+        user_id: currentUser.name,
+        user_location: currentUser.location,
+        module_type: 'auto',
+        gps_route: JSON.stringify({
+          start: pendingRouteData.startLocation,
+          end: pendingRouteData.endLocation,
+          distance: pendingRouteData.distance,
+          duration: pendingRouteData.duration
+        }),
+        start_coordinates: pendingRouteData.startCoords,
+        end_coordinates: pendingRouteData.endCoords,
+        route_confirmed: true,
+        offline_sync: false,
+        travel_duration: pendingRouteData.duration
+      };
+
+      if (allRecords.length >= 999) {
+        showToast('Limite de 999 registros atingido', 'error');
+        return;
+      }
+
+      // Simular delay de envio
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      allRecords.push(routeRecord);
+      saveLocalData();
+      renderTable();
+      updateSelectAllCheckbox();
+      
+      if (currentUser && currentUser.type === 'gestor') {
+        updateManagerDashboard();
+      }
+      
+      showToast('Rota confirmada e enviada com sucesso!', 'success');
+
+      hideRouteConfirmationModal();
+      updateGPSStatus('waiting', 'Aguardando próximo deslocamento...');
+    }
+
+    function stopGPSTracking() {
+      if (gpsWatchId) {
+        navigator.geolocation.clearWatch(gpsWatchId);
+        gpsWatchId = null;
+      }
+      
+      gpsTracking = false;
+      trackingStartPosition = null;
+      trackingStartTime = null;
+      lastPosition = null;
+      totalDistance = 0;
+      
+      document.getElementById('gps-status').classList.remove('active');
+      document.getElementById('btn-start-gps').classList.remove('hidden');
+      document.getElementById('btn-stop-gps').classList.add('hidden');
+      
+      showToast('Rastreamento GPS parado', 'success');
+    }
+
+    async function syncOfflineData() {
+      if (!isOnline || !window.dataSdk || offlineRecords.length === 0) return;
+
+      const syncStatus = document.getElementById('sync-status');
+      syncStatus.className = 'sync-status show syncing';
+      syncStatus.innerHTML = `
+        <div class="gps-info">
+          <div class="spinner"></div>
+          <div>
+            <div class="gps-text">Sincronizando ${offlineRecords.length} registro(s) offline...</div>
+            <div class="gps-details">Enviando dados para o servidor</div>
+          </div>
+        </div>
+      `;
+
+      let syncedCount = 0;
+      const recordsToSync = [...offlineRecords];
+      
+      for (const record of recordsToSync) {
+        if (allRecords.length >= 999) {
+          showToast('Limite de registros atingido durante sincronização', 'error');
+          break;
+        }
+
+        const result = await window.dataSdk.create(record);
+        if (result.isOk) {
+          syncedCount++;
+          offlineRecords = offlineRecords.filter(r => r.id !== record.id);
+        }
+      }
+
+      localStorage.setItem('offlineRecords', JSON.stringify(offlineRecords));
+
+      if (syncedCount > 0) {
+        syncStatus.className = 'sync-status show success';
+        syncStatus.innerHTML = `
+          <div class="gps-info">
+            <div class="gps-indicator tracking"></div>
+            <div>
+              <div class="gps-text">${syncedCount} registro(s) sincronizado(s) com sucesso!</div>
+              <div class="gps-details">Dados offline enviados para o servidor</div>
+            </div>
+          </div>
+        `;
+        
+        setTimeout(() => {
+          syncStatus.classList.remove('show');
+        }, 3000);
+      } else {
+        syncStatus.classList.remove('show');
+      }
+    }
+
+    function selectModule(module) {
+      selectedModule = module;
+      
+      // Update UI
+      document.querySelectorAll('.module-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      document.getElementById(module + '-module').classList.add('active');
+
+      if (module === 'manual') {
+        document.getElementById('manual-form-container').classList.remove('hidden');
+        document.getElementById('auto-controls-container').classList.add('hidden');
+        document.getElementById('gps-status').classList.remove('active');
+        stopGPSTracking();
+      } else {
+        document.getElementById('manual-form-container').classList.add('hidden');
+        document.getElementById('auto-controls-container').classList.remove('hidden');
+        document.getElementById('gps-status').classList.add('active');
+        updateGPSStatus('waiting', 'Clique em "Iniciar Rastreamento GPS" para começar');
+      }
+    }
+
+    function switchTab(tab) {
+      // Remove active class from all tabs and contents
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      // Add active class to selected tab and content
+      document.getElementById(tab + '-tab').classList.add('active');
+      document.getElementById(tab + '-content').classList.add('active');
+    }
+
+    async function initializeApp() {
+      // Load offline records
+      const stored = localStorage.getItem('offlineRecords');
+      if (stored) {
+        offlineRecords = JSON.parse(stored);
+      }
+
+      // Carregar dados locais
+      loadLocalData();
+
+      setupEventListeners();
+      
+      // Check initial online status
+      if (!isOnline) {
+        document.getElementById('offline-indicator').classList.add('show');
+      }
+    }
+
+    function setupEventListeners() {
+      // Login events
+      document.getElementById('login-form').addEventListener('submit', handleLogin);
+      document.getElementById('register-form').addEventListener('submit', handleRegister);
+      document.getElementById('forgot-password-form').addEventListener('submit', handleForgotPassword);
+      document.getElementById('logout-btn').addEventListener('click', handleLogout);
+      document.getElementById('manager-logout-btn').addEventListener('click', handleLogout);
+
+      // Traffic form events
+      document.getElementById('btn-send-direct').addEventListener('click', handleSendDirect);
+      document.getElementById('btn-add-queue').addEventListener('click', handleAddToQueue);
+      document.getElementById('btn-send-selected').addEventListener('click', handleSendSelected);
+      document.getElementById('btn-clear-all').addEventListener('click', handleClearAll);
+      document.getElementById('select-all').addEventListener('change', handleSelectAll);
+
+      // GPS events
+      document.getElementById('btn-start-gps').addEventListener('click', () => {
+        const autoPlaca = document.getElementById('auto-placa').value.trim();
+        if (!autoPlaca) {
+          showToast('Por favor, informe a placa do veículo primeiro', 'error');
+          return;
+        }
+        
+        document.getElementById('btn-start-gps').classList.add('hidden');
+        document.getElementById('btn-stop-gps').classList.remove('hidden');
+        startGPSTracking();
+      });
+      
+      document.getElementById('btn-stop-gps').addEventListener('click', stopGPSTracking);
+
+      // Route confirmation events
+      document.getElementById('confirm-route-btn').addEventListener('click', confirmRoute);
+      document.getElementById('cancel-route-btn').addEventListener('click', hideRouteConfirmationModal);
+
+      // Responsible modal events
+      document.getElementById('confirm-responsible-btn').addEventListener('click', confirmResponsible);
+      document.getElementById('cancel-responsible-btn').addEventListener('click', hideResponsibleModal);
+
+      // Manager dashboard events
+      document.getElementById('ranking-filter').addEventListener('change', updateRanking);
+      document.getElementById('status-filter').addEventListener('change', filterManagerTable);
+      document.getElementById('driver-filter').addEventListener('change', filterManagerTable);
+      document.getElementById('module-filter').addEventListener('change', filterManagerTable);
+
+      // Photo upload events
+      document.getElementById('upload-photo-btn').addEventListener('click', () => {
+        document.getElementById('photo-input').click();
+      });
+      document.getElementById('photo-input').addEventListener('change', handlePhotoUpload);
+
+      // Export events
+      document.getElementById('export-ranking-btn').addEventListener('click', exportRanking);
+      document.getElementById('export-pdf-btn').addEventListener('click', exportToPDF);
+      document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+
+      // Search events
+      document.getElementById('search-driver').addEventListener('input', applySearchFilters);
+      document.getElementById('search-plate').addEventListener('input', applySearchFilters);
+      document.getElementById('date-from').addEventListener('change', applySearchFilters);
+      document.getElementById('date-to').addEventListener('change', applySearchFilters);
+
+      // Password validation for numeric input
+      document.getElementById('reg-password').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      });
+      
+      document.getElementById('reg-password-confirm').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      });
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showToast('Preencha todos os campos', 'error');
+        return;
+      }
+
+      // Buscar usuário por nome completo, primeiro nome ou primeiro + segundo nome
+      let userKey = null;
+      
+      // Primeiro, tentar encontrar por nome completo
+      userKey = Object.keys(registeredUsers).find(key => 
+        key.toLowerCase() === username.toLowerCase()
+      );
+      
+      // Se não encontrou, tentar por primeiro nome
+      if (!userKey) {
+        userKey = Object.keys(registeredUsers).find(key => {
+          const firstName = key.split(' ')[0].toLowerCase();
+          return firstName === username.toLowerCase();
+        });
+      }
+      
+      // Se não encontrou, tentar por primeiro + segundo nome
+      if (!userKey) {
+        userKey = Object.keys(registeredUsers).find(key => {
+          const nameParts = key.split(' ');
+          if (nameParts.length >= 2) {
+            const firstTwoNames = `${nameParts[0]} ${nameParts[1]}`.toLowerCase();
+            return firstTwoNames === username.toLowerCase();
+          }
+          return false;
+        });
+      }
+
+      if (userKey && registeredUsers[userKey].password === password) {
+        const userData = registeredUsers[userKey];
+        const displayName = userData.nickname || userKey.split(' ')[0];
+        
+        currentUser = {
+          name: userKey,
+          displayName: displayName,
+          location: userData.location,
+          type: userData.type || 'condutor'
+        };
+        
+        // Switch screens based on user type
+        document.getElementById('login-screen').classList.add('hidden');
+        
+        if (currentUser.type === 'gestor') {
+          document.getElementById('manager-screen').classList.remove('hidden');
+          document.getElementById('manager-user').textContent = displayName;
+          updateManagerDashboard();
+          showToast(`Bem-vindo ao Dashboard, ${displayName}!`, 'success');
+        } else {
+          document.getElementById('main-screen').classList.remove('hidden');
+          document.getElementById('logged-user').textContent = displayName;
+          document.getElementById('user-location').textContent = `Lotação: ${currentUser.location}`;
+          document.getElementById('condutor').value = displayName;
+          
+          // Set today's date
+          const today = new Date().toISOString().split('T')[0];
+          document.getElementById('data').value = today;
+          
+          // Initialize with manual module
+          selectModule('manual');
+          
+          // Renderizar tabela imediatamente após login para mostrar apenas registros do usuário
+          renderTable();
+          updateSelectAllCheckbox();
+          
+          showToast(`Bem-vindo, ${displayName}!`, 'success');
+        }
+      } else {
+        showToast('Nome de usuário ou senha incorretos', 'error');
+      }
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('reg-name').value.trim();
+      const nickname = document.getElementById('reg-nickname').value.trim();
+      const location = document.getElementById('reg-location').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const confirmPassword = document.getElementById('reg-password-confirm').value;
+
+      if (!name || !location || !password || !confirmPassword) {
+        showToast('Preencha todos os campos obrigatórios', 'error');
+        return;
+      }
+
+      if (password.length !== 6 || !/^\d{6}$/.test(password)) {
+        showToast('A senha deve conter exatamente 6 números', 'error');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showToast('As senhas não coincidem', 'error');
+        return;
+      }
+
+      // Verificar se já existe usuário com o mesmo nome (ignorando maiúsculas/minúsculas)
+      const existingUser = Object.keys(registeredUsers).find(key => 
+        key.toLowerCase() === name.toLowerCase()
+      );
+
+      if (existingUser) {
+        showToast('Já existe um condutor cadastrado com este nome', 'error');
+        return;
+      }
+
+      // Definir apelido (usar nickname ou primeiro nome)
+      const finalNickname = nickname || name.split(' ')[0];
+
+      // Register new user (salvar nome em minúsculas para padronizar)
+      const userKey = name.toLowerCase();
+      registeredUsers[userKey] = {
+        password: password,
+        location: location,
+        nickname: finalNickname,
+        originalName: name
+      };
+
+      showToast('Cadastro realizado com sucesso! Faça login para continuar.', 'success');
+      
+      // Clear form and switch to login tab
+      document.getElementById('register-form').reset();
+      switchTab('login');
+    }
+
+    function handleForgotPassword(e) {
+      e.preventDefault();
+      
+      const fullName = document.getElementById('recovery-name').value.trim();
+
+      if (!fullName) {
+        showToast('Digite o nome completo', 'error');
+        return;
+      }
+
+      // Buscar usuário pelo nome completo exato
+      const userKey = Object.keys(registeredUsers).find(key => 
+        key.toLowerCase() === fullName.toLowerCase()
+      );
+
+      if (userKey) {
+        const userData = registeredUsers[userKey];
+        const displayName = userData.originalName || userKey;
+        
+        // Mostrar a senha (em um sistema real, seria enviado por email/SMS)
+        showPasswordRecoveryModal(displayName, userData.password);
+      } else {
+        showToast('Nome não encontrado. Verifique se digitou exatamente como cadastrado.', 'error');
+      }
+    }
+
+    function showPasswordRecoveryModal(userName, password) {
+      // Criar modal temporário para mostrar a senha
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Senha Recuperada</h3>
+            <p class="modal-subtitle">Senha encontrada para: <strong>${userName}</strong></p>
+          </div>
+          
+          <div class="route-summary">
+            <div class="route-item">
+              <span class="route-label">Sua senha é:</span>
+              <span class="route-value" style="font-size: 1.5rem; font-weight: bold; color: #253d70;">${password}</span>
+            </div>
+          </div>
+
+          <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <p style="margin: 0; font-size: 0.875rem; color: #92400e;">
+              <strong>Importante:</strong> Anote sua senha em local seguro. Por segurança, recomendamos alterar sua senha após o login.
+            </p>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-primary" onclick="closePasswordModal()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+              Entendi, Fazer Login
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+    }
+
+    function closePasswordModal() {
+      const modal = document.querySelector('.modal-overlay');
+      if (modal) {
+        modal.remove();
+      }
+      backToLogin();
+    }
+
+    function showForgotPassword() {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Remove active from all tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show forgot password content
+      document.getElementById('forgot-password-content').classList.add('active');
+    }
+
+    function backToLogin() {
+      // Clear forgot password form
+      document.getElementById('forgot-password-form').reset();
+      
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Remove active from all tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show login content and activate login tab
+      document.getElementById('login-content').classList.add('active');
+      document.getElementById('login-tab').classList.add('active');
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      document.getElementById('login-form').reset();
+      
+      if (document.getElementById('traffic-form')) {
+        document.getElementById('traffic-form').reset();
+      }
+      
+      // Stop GPS tracking if active
+      stopGPSTracking();
+      
+      // Hide all screens
+      document.getElementById('main-screen').classList.add('hidden');
+      document.getElementById('manager-screen').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+      
+      // Reset to login tab
+      switchTab('login');
+      
+      showToast('Logout realizado com sucesso', 'success');
+    }
+
+    function getFormData() {
+      const condutor = document.getElementById('condutor').value.trim();
+      const placa = document.getElementById('placa').value.trim().toUpperCase();
+      const data = document.getElementById('data').value;
+      const destino = document.getElementById('destino').value.trim();
+      const kmInicial = parseFloat(document.getElementById('km-inicial').value);
+      const kmFinal = parseFloat(document.getElementById('km-final').value);
+
+      if (!condutor || !placa || !data || !destino || isNaN(kmInicial) || isNaN(kmFinal)) {
+        return null;
+      }
+
+      if (kmFinal < kmInicial) {
+        showToast('KM Final deve ser maior que KM Inicial', 'error');
+        return null;
+      }
+
+      return {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        condutor,
+        placa,
+        data,
+        destino,
+        km_inicial: kmInicial,
+        km_final: kmFinal,
+        status: 'Pendente',
+        created_at: new Date().toISOString(),
+        user_id: currentUser.name,
+        user_location: currentUser.location,
+        module_type: 'manual',
+        gps_route: '',
+        start_coordinates: '',
+        end_coordinates: '',
+        route_confirmed: false,
+        offline_sync: !isOnline,
+        travel_duration: 0
+      };
+    }
+
+    function clearForm() {
+      const condutor = document.getElementById('condutor').value;
+      const data = document.getElementById('data').value;
+      
+      document.getElementById('traffic-form').reset();
+      
+      // Restore condutor and date
+      document.getElementById('condutor').value = currentUser.displayName;
+      document.getElementById('data').value = data;
+    }
+
+    async function handleSendDirect() {
+      if (isProcessing) return;
+
+      const formData = getFormData();
+      if (!formData) {
+        showToast('Preencha todos os campos corretamente', 'error');
+        return;
+      }
+
+      isProcessing = true;
+      const btn = document.getElementById('btn-send-direct');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<div class="spinner"></div> Enviando...';
+      btn.disabled = true;
+
+      formData.status = 'Enviado';
+      formData.__backendId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      
+      // Simular delay de envio
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (allRecords.length >= 999) {
+        showToast('Limite de 999 registros atingido', 'error');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        isProcessing = false;
+        return;
+      }
+
+      allRecords.push(formData);
+      saveLocalData();
+      renderTable();
+      updateSelectAllCheckbox();
+      
+      if (currentUser && currentUser.type === 'gestor') {
+        updateManagerDashboard();
+      }
+      
+      showToast('Registro enviado com sucesso!', 'success');
+      clearForm();
+
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      isProcessing = false;
+    }
+
+    async function handleAddToQueue() {
+      if (isProcessing) return;
+
+      const formData = getFormData();
+      if (!formData) {
+        showToast('Preencha todos os campos corretamente', 'error');
+        return;
+      }
+
+      isProcessing = true;
+      const btn = document.getElementById('btn-add-queue');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<div class="spinner"></div> Adicionando...';
+      btn.disabled = true;
+
+      formData.__backendId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      
+      // Simular delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (allRecords.length >= 999) {
+        showToast('Limite de 999 registros atingido', 'error');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        isProcessing = false;
+        return;
+      }
+
+      allRecords.push(formData);
+      saveLocalData();
+      renderTable();
+      updateSelectAllCheckbox();
+      
+      if (currentUser && currentUser.type === 'gestor') {
+        updateManagerDashboard();
+      }
+      
+      showToast('Adicionado ao resumo!', 'success');
+      clearForm();
+
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      isProcessing = false;
+    }
+
+    async function handleSendSelected() {
+      if (isProcessing) return;
+
+      const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+      if (checkboxes.length === 0) {
+        showToast('Selecione pelo menos um registro', 'error');
+        return;
+      }
+
+      // Show responsible modal
+      showResponsibleModal(checkboxes);
+    }
+
+    async function handleClearAll() {
+      if (isProcessing) return;
+
+      // Filtrar registros pendentes apenas do usuário logado
+      const userPendingRecords = allRecords.filter(r => 
+        r.status === 'Pendente' && r.user_id === currentUser.name
+      );
+      
+      if (userPendingRecords.length === 0) {
+        showToast('Nenhum registro pendente para limpar', 'error');
+        return;
+      }
+
+      isProcessing = true;
+      const btn = document.getElementById('btn-clear-all');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<div class="spinner"></div> Limpando...';
+      btn.disabled = true;
+
+      // Simular delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Remover apenas registros pendentes do usuário logado
+      allRecords = allRecords.filter(r => 
+        !(r.status === 'Pendente' && r.user_id === currentUser.name)
+      );
+      
+      saveLocalData();
+      renderTable();
+      updateSelectAllCheckbox();
+      
+      if (currentUser && currentUser.type === 'gestor') {
+        updateManagerDashboard();
+      }
+
+      showToast('Registros pendentes removidos!', 'success');
+
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      isProcessing = false;
+    }
+
+    function handleSelectAll(e) {
+      let checkboxes = document.querySelectorAll('.record-checkbox');
+      
+      // Se não for gestor, filtrar apenas checkboxes dos registros do usuário
+      if (currentUser && currentUser.type !== 'gestor') {
+        const userRecordIds = allRecords
+          .filter(record => record.user_id === currentUser.name)
+          .map(record => record.__backendId);
+        
+        checkboxes = Array.from(checkboxes).filter(cb => 
+          userRecordIds.includes(cb.dataset.id)
+        );
+      }
+      
+      checkboxes.forEach(cb => {
+        if (!cb.disabled) {
+          cb.checked = e.target.checked;
+        }
+      });
+      updateSendButton();
+    }
+
+    function updateSelectAllCheckbox() {
+      const selectAll = document.getElementById('select-all');
+      
+      // Filtrar checkboxes apenas dos registros do usuário logado
+      let userCheckboxes = document.querySelectorAll('.record-checkbox:not(:disabled)');
+      let userCheckedBoxes = document.querySelectorAll('.record-checkbox:checked:not(:disabled)');
+      
+      // Se não for gestor, filtrar apenas registros do usuário
+      if (currentUser && currentUser.type !== 'gestor') {
+        const userRecordIds = allRecords
+          .filter(record => record.user_id === currentUser.name)
+          .map(record => record.__backendId);
+        
+        userCheckboxes = Array.from(userCheckboxes).filter(cb => 
+          userRecordIds.includes(cb.dataset.id)
+        );
+        userCheckedBoxes = Array.from(userCheckedBoxes).filter(cb => 
+          userRecordIds.includes(cb.dataset.id)
+        );
+      }
+      
+      if (userCheckboxes.length === 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+      } else if (userCheckedBoxes.length === userCheckboxes.length) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+      } else if (userCheckedBoxes.length > 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+      } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+      }
+    }
+
+    function updateSendButton() {
+      let checkedBoxes = document.querySelectorAll('.record-checkbox:checked');
+      
+      // Se não for gestor, filtrar apenas checkboxes dos registros do usuário
+      if (currentUser && currentUser.type !== 'gestor') {
+        const userRecordIds = allRecords
+          .filter(record => record.user_id === currentUser.name)
+          .map(record => record.__backendId);
+        
+        checkedBoxes = Array.from(checkedBoxes).filter(cb => 
+          userRecordIds.includes(cb.dataset.id)
+        );
+      }
+      
+      document.getElementById('btn-send-selected').disabled = checkedBoxes.length === 0;
+      updateSelectAllCheckbox();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('records-tbody');
+      
+      // Filtrar registros apenas do usuário logado (exceto para gestores)
+      let userRecords = allRecords;
+      if (currentUser && currentUser.type !== 'gestor') {
+        userRecords = allRecords.filter(record => record.user_id === currentUser.name);
+      }
+      
+      if (userRecords.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="11" class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              <p>Nenhum registro na fila</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = userRecords.map(record => {
+        const distancia = (record.km_final - record.km_inicial).toFixed(1);
+        const statusClass = `status-${record.status.toLowerCase()}`;
+        const moduleClass = `module-${record.module_type || 'manual'}`;
+        const moduleText = record.module_type === 'auto' ? 'GPS' : 'Manual';
+        const isDisabled = record.status !== 'Pendente';
+        const dataFormatada = new Date(record.data).toLocaleDateString('pt-BR');
+        const responsavel = record.responsavel_unidade || '-';
+        const tipoUnidade = record.tipo_unidade || '-';
+        
+        return `
+          <tr>
+            <td class="checkbox-cell">
+              <input type="checkbox" 
+                     class="record-checkbox" 
+                     data-id="${record.__backendId}"
+                     ${isDisabled ? 'disabled' : ''}
+                     onchange="updateSendButton()">
+            </td>
+            <td>${record.condutor}</td>
+            <td>${record.placa}</td>
+            <td>${dataFormatada}</td>
+            <td>${record.destino}</td>
+            <td>${record.km_inicial.toFixed(1)} km</td>
+            <td>${record.km_final.toFixed(1)} km</td>
+            <td><strong>${distancia} km</strong></td>
+            <td><span class="status-badge ${statusClass}">${record.status}</span></td>
+            <td><span class="module-badge ${moduleClass}">${moduleText}</span></td>
+            <td><small>${responsavel}</small></td>
+          </tr>
+        `;
+      }).join('');
+
+      updateSendButton();
+    }
+
+    function showToast(message, type = 'success') {
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) {
+        existingToast.remove();
+      }
+
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icon = type === 'success' 
+        ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>'
+        : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+      
+      toast.innerHTML = `${icon}<span>${message}</span>`;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // Manager Dashboard Functions
+    function updateManagerDashboard() {
+      updateDashboardStats();
+      updateRanking();
+      updateManagerTable();
+      populateDriverFilter();
+    }
+
+    function updateDashboardStats() {
+      const totalReports = allRecords.length;
+      const sentReports = allRecords.filter(r => r.status === 'Enviado').length;
+      const pendingReports = allRecords.filter(r => r.status === 'Pendente').length;
+      const totalKm = allRecords.reduce((sum, r) => sum + (r.km_final - r.km_inicial), 0);
+
+      document.getElementById('total-reports').textContent = totalReports;
+      document.getElementById('sent-reports').textContent = sentReports;
+      document.getElementById('pending-reports').textContent = pendingReports;
+      document.getElementById('total-km').textContent = totalKm.toFixed(1) + ' km';
+    }
+
+    function updateRanking() {
+      const filterType = document.getElementById('ranking-filter').value;
+      const driverStats = {};
+
+      // Calculate stats for each driver
+      allRecords.forEach(record => {
+        const driver = record.condutor;
+        if (!driverStats[driver]) {
+          driverStats[driver] = {
+            name: driver,
+            location: record.user_location,
+            totalKm: 0,
+            reportCount: 0,
+            sentReports: 0
+          };
+        }
+        
+        driverStats[driver].totalKm += (record.km_final - record.km_inicial);
+        driverStats[driver].reportCount++;
+        if (record.status === 'Enviado') {
+          driverStats[driver].sentReports++;
+        }
+      });
+
+      // Convert to array and sort
+      let sortedDrivers = Object.values(driverStats);
+      
+      switch (filterType) {
+        case 'km':
+          sortedDrivers.sort((a, b) => b.totalKm - a.totalKm);
+          break;
+        case 'reports':
+          sortedDrivers.sort((a, b) => b.reportCount - a.reportCount);
+          break;
+        case 'efficiency':
+          sortedDrivers.sort((a, b) => (b.sentReports / b.reportCount) - (a.sentReports / a.reportCount));
+          break;
+      }
+
+      renderRanking(sortedDrivers, filterType);
+    }
+
+    function renderRanking(drivers, filterType) {
+      const rankingList = document.getElementById('ranking-list');
+      
+      if (drivers.length === 0) {
+        rankingList.innerHTML = '<div class="empty-ranking">Nenhum condutor encontrado</div>';
+        return;
+      }
+
+      rankingList.innerHTML = drivers.map((driver, index) => {
+        const position = index + 1;
+        const positionClass = position === 1 ? 'gold' : position === 2 ? 'silver' : position === 3 ? 'bronze' : '';
+        const avgKm = driver.reportCount > 0 ? (driver.totalKm / driver.reportCount).toFixed(1) : '0.0';
+        
+        let metricValue;
+        switch (filterType) {
+          case 'km':
+            metricValue = driver.totalKm.toFixed(1) + ' km';
+            break;
+          case 'reports':
+            metricValue = driver.reportCount;
+            break;
+          case 'efficiency':
+            metricValue = driver.reportCount > 0 ? ((driver.sentReports / driver.reportCount) * 100).toFixed(1) + '%' : '0%';
+            break;
+        }
+
+        return `
+          <div class="ranking-item">
+            <div class="ranking-position ${positionClass}">${position}</div>
+            <div class="ranking-driver">${driver.name}</div>
+            <div class="ranking-location">${driver.location}</div>
+            <div class="ranking-metric">${metricValue}</div>
+            <div class="ranking-reports">${driver.reportCount}</div>
+            <div class="ranking-avg">${avgKm} km</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateManagerTable() {
+      filterManagerTable();
+    }
+
+    function filterManagerTable() {
+      const statusFilter = document.getElementById('status-filter').value;
+      const driverFilter = document.getElementById('driver-filter').value;
+      const moduleFilter = document.getElementById('module-filter').value;
+      
+      let filteredRecords = allRecords;
+      
+      if (statusFilter !== 'all') {
+        filteredRecords = filteredRecords.filter(r => r.status === statusFilter);
+      }
+      
+      if (driverFilter !== 'all') {
+        filteredRecords = filteredRecords.filter(r => r.condutor === driverFilter);
+      }
+
+      if (moduleFilter !== 'all') {
+        filteredRecords = filteredRecords.filter(r => (r.module_type || 'manual') === moduleFilter);
+      }
+      
+      renderManagerTable(filteredRecords);
+    }
+
+    function renderManagerTable(records) {
+      const tbody = document.getElementById('manager-records-tbody');
+      
+      if (records.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12" class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              <p>Nenhum registro encontrado</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = records.map(record => {
+        const distancia = (record.km_final - record.km_inicial).toFixed(1);
+        const statusClass = `status-${record.status.toLowerCase()}`;
+        const moduleClass = `module-${record.module_type || 'manual'}`;
+        const moduleText = record.module_type === 'auto' ? 'GPS' : 'Manual';
+        const dataFormatada = new Date(record.data).toLocaleDateString('pt-BR');
+        const responsavel = record.responsavel_unidade || '-';
+        const tipoUnidade = record.tipo_unidade || '-';
+        
+        return `
+          <tr>
+            <td>${record.condutor}</td>
+            <td>${record.placa}</td>
+            <td>${dataFormatada}</td>
+            <td>${record.destino}</td>
+            <td>${record.km_inicial.toFixed(1)} km</td>
+            <td>${record.km_final.toFixed(1)} km</td>
+            <td><strong>${distancia} km</strong></td>
+            <td><span class="status-badge ${statusClass}">${record.status}</span></td>
+            <td><span class="module-badge ${moduleClass}">${moduleText}</span></td>
+            <td>${record.user_location}</td>
+            <td><small>${responsavel}</small></td>
+            <td><small>${tipoUnidade}</small></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function populateDriverFilter() {
+      const driverFilter = document.getElementById('driver-filter');
+      const drivers = [...new Set(allRecords.map(r => r.condutor))].sort();
+      
+      // Clear existing options except "all"
+      driverFilter.innerHTML = '<option value="all">Todos os Condutores</option>';
+      
+      drivers.forEach(driver => {
+        const option = document.createElement('option');
+        option.value = driver;
+        option.textContent = driver;
+        driverFilter.appendChild(option);
+      });
+    }
+
+    // Photo upload function
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Por favor, selecione apenas arquivos de imagem', 'error');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        showToast('A imagem deve ter no máximo 5MB', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const photoContainer = document.getElementById('manager-photo');
+        photoContainer.innerHTML = `<img src="${e.target.result}" alt="Foto do Gestor">`;
+        
+        // Save to localStorage
+        localStorage.setItem('managerPhoto', e.target.result);
+        showToast('Foto do perfil atualizada!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Load saved photo on page load
+    function loadManagerPhoto() {
+      const savedPhoto = localStorage.getItem('managerPhoto');
+      if (savedPhoto) {
+        const photoContainer = document.getElementById('manager-photo');
+        photoContainer.innerHTML = `<img src="${savedPhoto}" alt="Foto do Gestor">`;
+      }
+    }
+
+    // Search and filter functions
+    function applySearchFilters() {
+      const driverSearch = document.getElementById('search-driver').value.toLowerCase();
+      const plateSearch = document.getElementById('search-plate').value.toLowerCase();
+      const dateFrom = document.getElementById('date-from').value;
+      const dateTo = document.getElementById('date-to').value;
+
+      let filteredRecords = allRecords;
+
+      if (driverSearch) {
+        filteredRecords = filteredRecords.filter(r => 
+          r.condutor.toLowerCase().includes(driverSearch)
+        );
+      }
+
+      if (plateSearch) {
+        filteredRecords = filteredRecords.filter(r => 
+          r.placa.toLowerCase().includes(plateSearch)
+        );
+      }
+
+      if (dateFrom) {
+        filteredRecords = filteredRecords.filter(r => 
+          r.data >= dateFrom
+        );
+      }
+
+      if (dateTo) {
+        filteredRecords = filteredRecords.filter(r => 
+          r.data <= dateTo
+        );
+      }
+
+      renderManagerTable(filteredRecords);
+    }
+
+    // Export functions
+    function exportRanking() {
+      const filterType = document.getElementById('ranking-filter').value;
+      const driverStats = {};
+
+      allRecords.forEach(record => {
+        const driver = record.condutor;
+        if (!driverStats[driver]) {
+          driverStats[driver] = {
+            name: driver,
+            location: record.user_location,
+            totalKm: 0,
+            reportCount: 0,
+            sentReports: 0
+          };
+        }
+        
+        driverStats[driver].totalKm += (record.km_final - record.km_inicial);
+        driverStats[driver].reportCount++;
+        if (record.status === 'Enviado') {
+          driverStats[driver].sentReports++;
+        }
+      });
+
+      let sortedDrivers = Object.values(driverStats);
+      
+      switch (filterType) {
+        case 'km':
+          sortedDrivers.sort((a, b) => b.totalKm - a.totalKm);
+          break;
+        case 'reports':
+          sortedDrivers.sort((a, b) => b.reportCount - a.reportCount);
+          break;
+        case 'efficiency':
+          sortedDrivers.sort((a, b) => (b.sentReports / b.reportCount) - (a.sentReports / a.reportCount));
+          break;
+      }
+
+      // Create CSV content
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Posição,Condutor,Lotação,KM Total,Reports,Média KM/Report,Eficiência\n";
+
+      sortedDrivers.forEach((driver, index) => {
+        const position = index + 1;
+        const avgKm = driver.reportCount > 0 ? (driver.totalKm / driver.reportCount).toFixed(1) : '0.0';
+        const efficiency = driver.reportCount > 0 ? ((driver.sentReports / driver.reportCount) * 100).toFixed(1) + '%' : '0%';
+        
+        csvContent += `${position},"${driver.name}","${driver.location}",${driver.totalKm.toFixed(1)},${driver.reportCount},${avgKm},${efficiency}\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `ranking_condutores_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('Ranking exportado com sucesso!', 'success');
+    }
+
+    function exportToPDF() {
+      const records = getFilteredRecords();
+      
+      // Create PDF content as HTML
+      const pdfContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório de Tráfego - ${new Date().toLocaleDateString('pt-BR')}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .header h1 { color: #253d70; margin-bottom: 5px; }
+            .header p { color: #666; margin: 0; }
+            .summary { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+            .summary-item { text-align: center; }
+            .summary-item h3 { margin: 0; color: #253d70; font-size: 24px; }
+            .summary-item p { margin: 5px 0 0 0; color: #666; font-size: 14px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+            th { background-color: #253d70; color: white; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .status-enviado { background: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 4px; }
+            .status-pendente { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; }
+            .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Sistema de Controle de Tráfego</h1>
+            <p>COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS</p>
+            <p>Relatório Detalhado - ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+          </div>
+          
+          <div class="summary">
+            <h3>Resumo Geral</h3>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <h3>${records.length}</h3>
+                <p>Total de Reports</p>
+              </div>
+              <div class="summary-item">
+                <h3>${records.filter(r => r.status === 'Enviado').length}</h3>
+                <p>Reports Enviados</p>
+              </div>
+              <div class="summary-item">
+                <h3>${records.filter(r => r.status === 'Pendente').length}</h3>
+                <p>Reports Pendentes</p>
+              </div>
+              <div class="summary-item">
+                <h3>${records.reduce((sum, r) => sum + (r.km_final - r.km_inicial), 0).toFixed(1)} km</h3>
+                <p>Total KM Rodados</p>
+              </div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Condutor</th>
+                <th>Placa</th>
+                <th>Data</th>
+                <th>Destino</th>
+                <th>KM Inicial</th>
+                <th>KM Final</th>
+                <th>Distância</th>
+                <th>Status</th>
+                <th>Módulo</th>
+                <th>Lotação</th>
+                <th>Responsável</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${records.map(record => {
+                const distancia = (record.km_final - record.km_inicial).toFixed(1);
+                const dataFormatada = new Date(record.data).toLocaleDateString('pt-BR');
+                const moduleText = record.module_type === 'auto' ? 'GPS' : 'Manual';
+                const responsavel = record.responsavel_unidade || '-';
+                const statusClass = record.status === 'Enviado' ? 'status-enviado' : 'status-pendente';
+                
+                return `
+                  <tr>
+                    <td>${record.condutor}</td>
+                    <td>${record.placa}</td>
+                    <td>${dataFormatada}</td>
+                    <td>${record.destino}</td>
+                    <td>${record.km_inicial.toFixed(1)} km</td>
+                    <td>${record.km_final.toFixed(1)} km</td>
+                    <td><strong>${distancia} km</strong></td>
+                    <td><span class="${statusClass}">${record.status}</span></td>
+                    <td>${moduleText}</td>
+                    <td>${record.user_location}</td>
+                    <td>${responsavel}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>Relatório gerado por: Welligton Ferreira (Gestor)</p>
+            <p>Sistema de Controle de Tráfego - COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Create and download PDF
+      const blob = new Blob([pdfContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `relatorio_trafego_${new Date().toISOString().split('T')[0]}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Relatório PDF gerado! Abra o arquivo HTML no navegador e use Ctrl+P para imprimir como PDF.', 'success');
+    }
+
+    function exportToExcel() {
+      const records = getFilteredRecords();
+      
+      // Create HTML table for Excel with proper formatting
+      let htmlContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8">
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>Relatório de Tráfego</x:Name>
+                  <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            .header { 
+              font-weight: bold; 
+              font-size: 16px; 
+              text-align: center; 
+              background-color: #253d70; 
+              color: white; 
+              padding: 10px;
+            }
+            .subheader { 
+              font-weight: bold; 
+              font-size: 14px; 
+              text-align: center; 
+              background-color: #f8f9fa; 
+              padding: 8px;
+            }
+            .summary { 
+              background-color: #e3f2fd; 
+              font-weight: bold; 
+              text-align: center; 
+              padding: 5px;
+            }
+            table { 
+              border-collapse: collapse; 
+              width: 100%; 
+              font-family: Arial, sans-serif;
+            }
+            th { 
+              background-color: #253d70; 
+              color: white; 
+              font-weight: bold; 
+              text-align: center; 
+              padding: 8px; 
+              border: 1px solid #000;
+            }
+            td { 
+              padding: 6px; 
+              border: 1px solid #ccc; 
+              text-align: left;
+            }
+            .number { text-align: right; }
+            .center { text-align: center; }
+            .status-enviado { background-color: #d1fae5; color: #065f46; font-weight: bold; }
+            .status-pendente { background-color: #fef3c7; color: #92400e; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <tr>
+              <td colspan="12" class="header">SISTEMA DE CONTROLE DE TRÁFEGO</td>
+            </tr>
+            <tr>
+              <td colspan="12" class="subheader">COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS</td>
+            </tr>
+            <tr>
+              <td colspan="12" class="subheader">Relatório Detalhado - ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
+            </tr>
+            <tr><td colspan="12"></td></tr>
+            
+            <!-- Resumo Estatístico -->
+            <tr>
+              <td colspan="3" class="summary">Total de Reports: ${records.length}</td>
+              <td colspan="3" class="summary">Reports Enviados: ${records.filter(r => r.status === 'Enviado').length}</td>
+              <td colspan="3" class="summary">Reports Pendentes: ${records.filter(r => r.status === 'Pendente').length}</td>
+              <td colspan="3" class="summary">Total KM: ${records.reduce((sum, r) => sum + (r.km_final - r.km_inicial), 0).toFixed(1)} km</td>
+            </tr>
+            <tr><td colspan="12"></td></tr>
+            
+            <!-- Cabeçalho da Tabela -->
+            <tr>
+              <th>Condutor</th>
+              <th>Placa</th>
+              <th>Data</th>
+              <th>Destino</th>
+              <th>KM Inicial</th>
+              <th>KM Final</th>
+              <th>Distância (km)</th>
+              <th>Status</th>
+              <th>Módulo</th>
+              <th>Lotação</th>
+              <th>Responsável</th>
+              <th>Tipo Unidade</th>
+            </tr>
+      `;
+
+      // Add data rows
+      records.forEach(record => {
+        const distancia = (record.km_final - record.km_inicial).toFixed(1);
+        const dataFormatada = new Date(record.data).toLocaleDateString('pt-BR');
+        const moduleText = record.module_type === 'auto' ? 'GPS' : 'Manual';
+        const responsavel = record.responsavel_unidade || '-';
+        const tipoUnidade = record.tipo_unidade || '-';
+        const statusClass = record.status === 'Enviado' ? 'status-enviado' : 'status-pendente';
+        
+        htmlContent += `
+          <tr>
+            <td>${record.condutor}</td>
+            <td class="center">${record.placa}</td>
+            <td class="center">${dataFormatada}</td>
+            <td>${record.destino}</td>
+            <td class="number">${record.km_inicial.toFixed(1)}</td>
+            <td class="number">${record.km_final.toFixed(1)}</td>
+            <td class="number">${distancia}</td>
+            <td class="center ${statusClass}">${record.status}</td>
+            <td class="center">${moduleText}</td>
+            <td>${record.user_location}</td>
+            <td>${responsavel}</td>
+            <td>${tipoUnidade}</td>
+          </tr>
+        `;
+      });
+
+      htmlContent += `
+            <tr><td colspan="12"></td></tr>
+            <tr>
+              <td colspan="12" class="subheader">Relatório gerado por: Welligton Ferreira (Gestor) - Sistema de Controle de Tráfego</td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+
+      // Create and download Excel file
+      const blob = new Blob([htmlContent], { 
+        type: 'application/vnd.ms-excel;charset=utf-8' 
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `relatorio_trafego_${new Date().toISOString().split('T')[0]}.xls`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Relatório Excel com tabela formatada exportado com sucesso!', 'success');
+    }
+
+    function getFilteredRecords() {
+      const driverSearch = document.getElementById('search-driver').value.toLowerCase();
+      const plateSearch = document.getElementById('search-plate').value.toLowerCase();
+      const dateFrom = document.getElementById('date-from').value;
+      const dateTo = document.getElementById('date-to').value;
+
+      let filteredRecords = allRecords;
+
+      if (driverSearch) {
+        filteredRecords = filteredRecords.filter(r => 
+          r.condutor.toLowerCase().includes(driverSearch)
+        );
+      }
+
+      if (plateSearch) {
+        filteredRecords = filteredRecords.filter(r => 
+          r.placa.toLowerCase().includes(plateSearch)
+        );
+      }
+
+      if (dateFrom) {
+        filteredRecords = filteredRecords.filter(r => 
+          r.data >= dateFrom
+        );
+      }
+
+      if (dateTo) {
+        filteredRecords = filteredRecords.filter(r => 
+          r.data <= dateTo
+        );
+      }
+
+      return filteredRecords;
+    }
+
+    // Initialize app and load manager photo
+    initializeApp();
+    
+    // Load manager photo when page loads
+    setTimeout(() => {
+      if (currentUser && currentUser.type === 'gestor') {
+        loadManagerPhoto();
+      }
+    }, 1000);
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'999fba64f4df06a3',t:'MTc2MjM4MTExOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
