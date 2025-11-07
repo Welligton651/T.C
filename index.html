@@ -1723,6 +1723,30 @@
       <h3 class="module-title" id="auto-module-title">Tráfego Automático (GPS)</h3>
       <p class="module-description">Rastreamento automático por GPS com detecção de deslocamento</p>
      </div>
+    </div><!-- Speed Monitor Card -->
+    <div id="speed-monitor" class="gps-status" style="display: none;">
+     <div class="speed-card" style="background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; border: 2px solid #e5e7eb; text-align: center;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
+       <div style="background: #f0f9ff; border-radius: 50%; padding: 1rem; border: 2px solid #0ea5e9;">
+        <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2"><path d="M12 2v10l3 3" /> <circle cx="12" cy="12" r="10" />
+        </svg>
+       </div>
+       <div>
+        <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.25rem;">
+         Velocidade Atual
+        </div>
+        <div id="current-speed-display" style="font-size: 2.5rem; font-weight: 700; color: #6b7280; transition: color 0.3s ease;">
+         0
+        </div>
+        <div style="font-size: 0.875rem; color: #64748b; font-weight: 600;">
+         km/h
+        </div>
+       </div>
+      </div>
+      <div id="speed-status-text" style="margin-top: 1rem; font-size: 0.875rem; color: #64748b; font-weight: 500;">
+       Aguardando detecção de movimento...
+      </div>
+     </div>
     </div><!-- GPS Status (for auto module) -->
     <div id="gps-status" class="gps-status">
      <div class="gps-info">
@@ -1732,7 +1756,7 @@
         Aguardando permissão de localização...
        </div>
        <div class="gps-details" id="gps-details">
-        O rastreamento iniciará automaticamente com deslocamento &gt; 1km
+        O rastreamento iniciará automaticamente quando atingir 20km/h
        </div>
       </div>
      </div><!-- GPS Map and Timer Container -->
@@ -1813,7 +1837,8 @@
       <div style="font-size: 0.8125rem; color: #1976d2; line-height: 1.4;">
        <p style="margin: 0 0 0.5rem 0;"><strong>Chrome/Safari:</strong> Clique no ícone 🔒 na barra de endereço → Localização → Permitir</p>
        <p style="margin: 0 0 0.5rem 0;"><strong>Firefox:</strong> Clique no ícone 🛡️ → Permissões → Localização → Permitir</p>
-       <p style="margin: 0;"><strong>Celular:</strong> Configurações → Privacidade → Localização → Navegador → Permitir</p>
+       <p style="margin: 0 0 0.5rem 0;"><strong>Celular:</strong> Configurações → Privacidade → Localização → Navegador → Permitir</p>
+       <p style="margin: 0.5rem 0 0 0; font-weight: bold; color: #1565c0;"><strong>⚡ O rastreamento inicia automaticamente quando atingir 20km/h</strong></p>
       </div>
      </div>
      <div class="button-group"><button class="btn btn-gps" id="btn-start-gps">
@@ -1907,6 +1932,9 @@
     let countdownSeconds = 300; // 5 minutes in seconds
     let currentSpeed = 0;
     let speedHistory = [];
+    let lastLocationSave = null;
+    let locationSaveInterval = 5 * 60 * 1000; // 5 minutes in milliseconds
+    let savedLocations = [];
 
     // Usuários pré-cadastrados para teste
     const preRegisteredUsers = {
@@ -2067,6 +2095,9 @@
           // Se conseguiu a primeira posição, iniciar o rastreamento contínuo
           updateGPSStatus('waiting', 'Permissão concedida! Aguardando deslocamento...');
           
+          // Show speed monitor
+          document.getElementById('speed-monitor').style.display = 'block';
+          
           gpsWatchId = navigator.geolocation.watchPosition(
             handlePositionUpdate,
             handlePositionError,
@@ -2086,14 +2117,26 @@
       const timestamp = position.timestamp;
 
       // Calculate speed if not provided by GPS
-      if (speed !== null && speed !== undefined) {
+      if (speed !== null && speed !== undefined && speed >= 0) {
         currentSpeed = speed * 3.6; // Convert m/s to km/h
-      } else if (lastPosition && trackingStartTime) {
+      } else if (lastPosition && lastMovementTime) {
         const timeDiff = (timestamp - lastMovementTime) / 1000; // seconds
-        if (timeDiff > 0) {
+        if (timeDiff > 0 && timeDiff < 10) { // Only calculate if time diff is reasonable
           const distance = calculateDistance(
             lastPosition.latitude,
             lastPosition.longitude,
+            latitude,
+            longitude
+          );
+          currentSpeed = (distance / timeDiff) * 3600; // km/h
+        }
+      } else if (trackingStartPosition && trackingStartTime) {
+        // Calculate speed from start position for initial detection
+        const timeDiff = (timestamp - trackingStartTime) / 1000; // seconds
+        if (timeDiff > 2) { // Wait at least 2 seconds for accurate calculation
+          const distance = calculateDistance(
+            trackingStartPosition.latitude,
+            trackingStartPosition.longitude,
             latitude,
             longitude
           );
@@ -2108,34 +2151,45 @@
       }
       const avgSpeed = speedHistory.reduce((a, b) => a + b, 0) / speedHistory.length;
 
+      // Update speed display
+      updateSpeedDisplay(avgSpeed);
+
+      // Save location every 5 minutes during tracking
+      if (gpsTracking && (!lastLocationSave || (timestamp - lastLocationSave) >= locationSaveInterval)) {
+        savedLocations.push({
+          latitude,
+          longitude,
+          timestamp,
+          speed: avgSpeed
+        });
+        lastLocationSave = timestamp;
+        console.log(`Localização salva: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} - ${avgSpeed.toFixed(1)}km/h`);
+      }
+
       if (!gpsTracking) {
         // First position - check if we should start tracking
         if (!trackingStartPosition) {
           trackingStartPosition = { latitude, longitude };
           trackingStartTime = timestamp;
           lastMovementTime = timestamp;
-          updateGPSStatus('waiting', 'Aguardando deslocamento > 1km para iniciar rastreamento...');
+          updateGPSStatus('waiting', 'Aguardando velocidade > 20km/h para iniciar rastreamento...');
         } else {
-          const distance = calculateDistance(
-            trackingStartPosition.latitude,
-            trackingStartPosition.longitude,
-            latitude,
-            longitude
-          );
-
-          if (distance >= 1) { // Reduced from 20km to 1km for testing
+          // Check if vehicle is moving at least 20 km/h
+          if (avgSpeed >= 20) {
             // Start automatic tracking
             gpsTracking = true;
             lastPosition = trackingStartPosition;
-            totalDistance = distance;
+            totalDistance = 0; // Reset distance when starting tracking
             lastMovementTime = timestamp;
+            lastLocationSave = timestamp; // Initialize location save timer
+            savedLocations = [{ latitude, longitude, timestamp, speed: avgSpeed }]; // Save first location
             
             // Show map container
             document.getElementById('gps-map-container').classList.add('show');
             
-            updateGPSStatus('tracking', `Rastreamento ativo - ${distance.toFixed(1)}km percorridos`);
+            updateGPSStatus('tracking', `Rastreamento ativo - Velocidade: ${avgSpeed.toFixed(1)}km/h`);
             updateLiveStats();
-            showToast('Rastreamento automático iniciado!', 'success');
+            showToast('Rastreamento automático iniciado! Velocidade detectada: ' + avgSpeed.toFixed(1) + 'km/h', 'success');
           }
         }
       } else {
@@ -2214,6 +2268,34 @@
       document.getElementById('btn-stop-gps').classList.add('hidden');
     }
 
+    function updateSpeedDisplay(speed) {
+      const speedDisplay = document.getElementById('current-speed-display');
+      const statusText = document.getElementById('speed-status-text');
+      
+      if (speedDisplay) {
+        speedDisplay.textContent = Math.round(speed);
+        
+        // Change color based on speed
+        if (speed >= 20) {
+          speedDisplay.style.color = '#22c55e'; // Green when tracking starts
+          statusText.textContent = '🟢 Rastreamento ativo - Velocidade adequada';
+          statusText.style.color = '#22c55e';
+        } else if (speed >= 10) {
+          speedDisplay.style.color = '#f59e0b'; // Orange when approaching
+          statusText.textContent = '🟡 Aproximando da velocidade de rastreamento (20km/h)';
+          statusText.style.color = '#f59e0b';
+        } else if (speed > 0) {
+          speedDisplay.style.color = '#6b7280'; // Gray when moving slowly
+          statusText.textContent = '🔵 Movimento detectado - Acelere para iniciar rastreamento';
+          statusText.style.color = '#6b7280';
+        } else {
+          speedDisplay.style.color = '#6b7280'; // Gray when stopped
+          statusText.textContent = 'Aguardando detecção de movimento...';
+          statusText.style.color = '#64748b';
+        }
+      }
+    }
+
     function updateGPSStatus(status, message, details = '') {
       const gpsStatus = document.getElementById('gps-status');
       const indicator = document.getElementById('gps-indicator');
@@ -2223,7 +2305,7 @@
       gpsStatus.className = `gps-status active ${status}`;
       indicator.className = `gps-indicator ${status}`;
       text.textContent = message;
-      detailsEl.textContent = details || 'O rastreamento iniciará automaticamente com deslocamento > 20km';
+      detailsEl.textContent = details || 'O rastreamento iniciará automaticamente quando atingir 20km/h';
     }
 
     function startStopCountdown() {
@@ -2457,7 +2539,9 @@
           start: pendingRouteData.startLocation,
           end: pendingRouteData.endLocation,
           distance: pendingRouteData.distance,
-          duration: pendingRouteData.duration
+          duration: pendingRouteData.duration,
+          savedLocations: savedLocations,
+          locationSaveInterval: '5 minutos'
         }),
         start_coordinates: pendingRouteData.startCoords,
         end_coordinates: pendingRouteData.endCoords,
@@ -2514,10 +2598,13 @@
       currentSpeed = 0;
       speedHistory = [];
       countdownSeconds = 300;
+      lastLocationSave = null;
+      savedLocations = [];
       
       document.getElementById('gps-status').classList.remove('active');
       document.getElementById('gps-map-container').classList.remove('show');
       document.getElementById('countdown-timer').style.display = 'none';
+      document.getElementById('speed-monitor').style.display = 'none';
       document.getElementById('btn-start-gps').classList.remove('hidden');
       document.getElementById('btn-stop-gps').classList.add('hidden');
       
@@ -3969,5 +4056,5 @@
       }
     }, 1000);
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99a4f8104109ad9c',t:'MTc2MjQzNjA3My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99ae7bef636aca6e',t:'MTc2MjUzNTg0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
