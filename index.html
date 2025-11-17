@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema de Controle de Tráfego</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* TODO: SEU CSS INTEIRO VAI AQUI... */
     /* (Ocultado para brevidade, pois não foi alterado) */
@@ -1859,10 +1858,7 @@
  </head>
  <body><div id="responsible-modal" class="modal-overlay hidden">
    <div class="modal">
-    <div class="modal-header">
-     <h3 class="modal-title">Atesto de Responsabilidade</h3>
-     <p class="modal-subtitle">Informe o responsável da unidade que atesta as rotas selecionadas:</p>
-    </div>
+    
     <div class="form-group">
       <label for="responsible-name">Nome do Responsável</label> 
       <input type="text" id="responsible-name" required placeholder="Ex: João Silva Santos"> 
@@ -1885,32 +1881,19 @@
       <input type="number" id="km-final-day" min="0" step="0.1" placeholder="KM atual do odômetro">
       <small>Este KM fechará a sua última rota do dia.</small>
     </div>
-
     <div class="route-summary">
-     <div class="route-item">
-       <span class="route-label">Registros selecionados:</span> 
-       <span class="route-value" id="selected-count">0</span>
-     </div>
-     <div class="route-item">
        <span class="route-label">Total de quilometragem:</span> 
        <span class="route-value" id="selected-km">0 km</span>
      </div>
-    </div>
-    
-    <div class="button-group">
+    </div> <div class="button-group">
       <button class="btn btn-secondary" id="confirm-responsible-btn">
-        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" />
-        </svg> Confirmar e Enviar 
+       <svg width="20" height="20" ...></svg> Confirmar e Enviar 
       </button> 
       <button class="btn btn-danger" id="cancel-responsible-btn">
-        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" />
-        </svg> Cancelar 
+       <svg width="20" height="20" ...></svg> Cancelar 
       </button>
-    </div>
-
-   </div>
- </div>
-  </div><div id="login-screen" class="login-container">
+     </div>
+    </div> </div> <div id="login-screen" class="login-container">
    <div class="header">
     <h1 id="page-title">
      <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" height="40" width="40" viewbox="0 0 640 640" fill="white"><path d="M541.9 139.5C546.4 127.7 543.6 114.3 534.7 105.4C525.8 96.5 512.4 93.6 500.6 98.2L84.6 258.2C71.9 263 63.7 275.2 64 288.7C64.3 302.2 73.1 314.1 85.9 318.3L262.7 377.2L321.6 554C325.9 566.8 337.7 575.6 351.2 575.9C364.7 576.2 376.9 568 381.8 555.4L541.8 139.4z" />
@@ -2176,7 +2159,6 @@
         </div>
         <div class="metric-item">
          <div class="metric-icon">
-         <div class="metric-icon">
           <svg width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10" /> <line x1="12" y1="20" x2="12" y2="4" /> <line x1="6" y1="20" x2="6" y2="14" />
           </svg>
          </div>
@@ -2226,47 +2208,7 @@
        </div>
        <div class="location-analysis" id="location-analysis"></div>
       </div>
-     </div>
-<div class="charts-grid">
-      
-      <div class="card chart-card">
-       <div class="chart-header">
-        <h3>Consumo de KM por Lotação</h3>
-       </div>
-       <div class="chart-container">
-        <canvas id="chart-km-location"></canvas>
-       </div>
-      </div>
-
-      <div class="card chart-card">
-       <div class="chart-header">
-        <h3>Top 5 Tipos de Unidade</h3>
-       </div>
-       <div class="chart-container">
-        <canvas id="chart-top-destinations"></canvas>
-       </div>
-      </div>
-
-      <div class="card chart-card">
-       <div class="chart-header">
-        <h3>Ranking de Veículos</h3>
-       </div>
-       <div class="chart-container">
-        <canvas id="chart-top-vehicles"></canvas>
-       </div>
-      </div>
-
-      <div class="card chart-card">
-       <div class="chart-header">
-        <h3>Evolução Diária</h3>
-       </div>
-       <div class="chart-container">
-        <canvas id="chart-daily-evolution"></canvas>
-       </div>
-      </div>
-
-     </div>
-<div class="card">
+     </div><div class="card">
       <div class="table-header">
        <h2>
         <svg width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="#253d70" stroke-width="2" style="vertical-align: middle; margin-right: 8px;"><circle cx="11" cy="11" r="8" /> <path d="M21 21l-4.35-4.35" /> <circle cx="11" cy="8" r="2" /> <path d="M11 10v6" />
@@ -2692,13 +2634,13 @@
           // Carregar foto do gestor
           // Carregar foto do gestor
           if (currentUser.photoURL) {
+            // Se houver uma foto salva no Firebase, usa ela
             document.getElementById('manager-photo').innerHTML = `<img src="${currentUser.photoURL}" alt="Foto do Gestor" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
           }
-          
+          // Se não houver, o código não faz nada e mantém a foto padrão do HTML.
           updateManagerDashboard(); // Função completa do gestor
           
         } else {
-          // Lógica do Condutor
           document.getElementById('main-screen').classList.remove('hidden');
           document.getElementById('logged-user').textContent = currentUser.displayName;
           document.getElementById('user-location').textContent = `Lotação: ${currentUser.location}`;
@@ -2707,7 +2649,7 @@
           const today = new Date().toISOString().split('T')[0];
           document.getElementById('data').value = today;
           
-          renderTable(); 
+          renderTable(); // Renderiza apenas os registros do condutor
           updateSelectAllCheckbox();
         }
         
@@ -2720,118 +2662,6 @@
       }
     }
 
-    // --- FUNÇÃO DOS GRÁFICOS (AGORA NO LUGAR CERTO) ---
-    let chartsInstances = {};
-
-    function renderAdvancedCharts() {
-      if (!allRecords || allRecords.length === 0) return;
-
-      // 1. Dados para KM por Lotação
-      const kmByLocation = {};
-      allRecords.forEach(r => {
-        if (r.km_final && r.km_final > r.km_inicial) {
-          const loc = r.user_location || 'Indefinido';
-          const dist = r.km_final - r.km_inicial;
-          kmByLocation[loc] = (kmByLocation[loc] || 0) + dist;
-        }
-      });
-
-      // 2. Dados para Top Unidades
-      const tripsByUnit = {};
-      allRecords.forEach(r => {
-        const unit = r.tipo_unidade || 'Outros';
-        tripsByUnit[unit] = (tripsByUnit[unit] || 0) + 1;
-      });
-
-      // 3. Dados para Veículos
-      const tripsByVehicle = {};
-      allRecords.forEach(r => {
-        const plate = r.placa || 'Indefinido';
-        tripsByVehicle[plate] = (tripsByVehicle[plate] || 0) + 1;
-      });
-      const sortedVehicles = Object.entries(tripsByVehicle).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-      // 4. Dados por Dia
-      const tripsByDay = {};
-      for(let i=6; i>=0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        const label = `${d.getDate()}/${d.getMonth()+1}`;
-        tripsByDay[dateStr] = { label: label, count: 0 };
-      }
-      allRecords.forEach(r => {
-        let dateKey = r.data; 
-        if(tripsByDay[dateKey]) {
-          tripsByDay[dateKey].count++;
-        }
-      });
-      const timelineLabels = Object.values(tripsByDay).map(x => x.label);
-      const timelineData = Object.values(tripsByDay).map(x => x.count);
-
-      // Helper para criar gráficos
-      const createChart = (canvasId, type, labels, data, label, color) => {
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        if (chartsInstances[canvasId]) chartsInstances[canvasId].destroy();
-
-        chartsInstances[canvasId] = new Chart(ctx, {
-          type: type,
-          data: {
-            labels: labels,
-            datasets: [{
-              label: label,
-              data: data,
-              backgroundColor: color,
-              borderColor: color.replace('0.5', '1'),
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: type === 'doughnut' } },
-            indexAxis: canvasId === 'chart-top-vehicles' ? 'y' : 'x'
-          }
-        });
-      };
-
-      // Renderizar os 4 gráficos
-      createChart('chart-km-location', 'bar', Object.keys(kmByLocation), Object.values(kmByLocation), 'KM Total', 'rgba(37, 61, 112, 0.7)');
-      
-      const unitCtx = document.getElementById('chart-top-destinations').getContext('2d');
-      if (chartsInstances['chart-top-destinations']) chartsInstances['chart-top-destinations'].destroy();
-      chartsInstances['chart-top-destinations'] = new Chart(unitCtx, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(tripsByUnit),
-          datasets: [{
-            data: Object.values(tripsByUnit),
-            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-
-      createChart('chart-top-vehicles', 'bar', sortedVehicles.map(x => x[0]), sortedVehicles.map(x => x[1]), 'Viagens', 'rgba(245, 158, 11, 0.7)');
-      
-      const timelineCtx = document.getElementById('chart-daily-evolution').getContext('2d');
-      if (chartsInstances['chart-daily-evolution']) chartsInstances['chart-daily-evolution'].destroy();
-      chartsInstances['chart-daily-evolution'] = new Chart(timelineCtx, {
-        type: 'line',
-        data: {
-          labels: timelineLabels,
-          datasets: [{
-            label: 'Viagens por Dia',
-            data: timelineData,
-            borderColor: '#ef4444',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-    }
     function setupEventListeners() {
       // (a maioria dos event listeners permanece a mesma)
       document.getElementById('login-form').addEventListener('submit', handleLogin);
@@ -3371,39 +3201,85 @@
     }
 
     function showResponsibleModal(checkboxes) {
-      const selectedRecords = [];
+      let selectedRecords = [];
+      let intermediateRecords = [];
+      let lastPendingRecord = null;
       let totalKm = 0;
 
+      // 1. Filtrar todos os registros selecionados, pendentes e do usuário atual
       checkboxes.forEach(checkbox => {
         const recordId = checkbox.dataset.id;
         const record = allRecords.find(r => r.id === recordId);
         if (record && record.status === 'Pendente' && record.user_uid === currentUser.uid) {
-          if (record.km_final !== null && record.km_final > record.km_inicial) {
-            selectedRecords.push(record);
-            totalKm += (record.km_final - record.km_inicial);
-          } else {
-            showToast(`Registro "${record.destino}" não pode ser enviado sem KM Final válido.`, 'error');
-          }
+          selectedRecords.push(record);
         }
       });
 
       if (selectedRecords.length === 0) {
-        showToast('Nenhum registro válido selecionado para envio', 'error');
+        showToast('Nenhum registro pendente selecionado', 'error');
         return;
       }
 
-      document.getElementById('selected-count').textContent = selectedRecords.length;
-      document.getElementById('selected-km').textContent = totalKm.toFixed(1) + ' km';
-      document.getElementById('responsible-modal').classList.remove('hidden');
+      // 2. Separar os registros: O último (sem KM Final) e os intermediários (com KM Final)
+      selectedRecords.forEach(record => {
+        if (record.km_final === null) {
+          if (lastPendingRecord !== null) {
+            // Se já encontramos um registro sem KM final, não podemos ter dois.
+            showToast('Erro: Você só pode fechar uma rota por vez.', 'error');
+            return; // Aborta a função
+          }
+          lastPendingRecord = record;
+        } else if (record.km_final > record.km_inicial) {
+          intermediateRecords.push(record);
+          totalKm += (record.km_final - record.km_inicial);
+        }
+      });
       
-      window.selectedRecordsForSending = selectedRecords;
+      const kmFinalGroup = document.getElementById('km-final-day-group');
+      const kmFinalInput = document.getElementById('km-final-day');
+
+      // 3. Se encontramos uma rota para fechar, mostre o campo de KM Final
+      if (lastPendingRecord) {
+        kmFinalGroup.style.display = 'block'; // Mostra o campo
+        kmFinalInput.value = '';
+        kmFinalInput.min = lastPendingRecord.km_inicial;
+        kmFinalInput.placeholder = `KM deve ser > ${lastPendingRecord.km_inicial.toFixed(1)}`;
+        
+        // Armazena o registro que precisa ser atualizado
+        window.lastRecordToUpdate = lastPendingRecord; 
+        
+      } else {
+        kmFinalGroup.style.display = 'none'; // Esconde o campo
+        kmFinalInput.value = '';
+        window.lastRecordToUpdate = null;
+      }
+      
+      // 4. Armazena TODOS os registros que serão enviados (intermediários + o último)
+      window.selectedRecordsForSending = [...intermediateRecords, ...(lastPendingRecord ? [lastPendingRecord] : [])];
+      
+      if (window.selectedRecordsForSending.length === 0) {
+        showToast('Nenhum registro válido para envio.', 'error');
+        return;
+      }
+
+      // 5. Atualiza o resumo e mostra o modal
+      document.getElementById('selected-count').textContent = window.selectedRecordsForSending.length;
+      document.getElementById('selected-km').textContent = totalKm.toFixed(1) + ' km' + (lastPendingRecord ? ' (+ 1 pendente)' : '');
+      document.getElementById('responsible-modal').classList.remove('hidden');
     }
 
     function hideResponsibleModal() {
       document.getElementById('responsible-modal').classList.add('hidden');
       document.getElementById('responsible-name').value = '';
       document.getElementById('unit-type').value = '';
+      
+      // Limpa e esconde o campo de KM Final
+      document.getElementById('km-final-day-group').style.display = 'none';
+      document.getElementById('km-final-day').value = '';
+
+      // Limpa as variáveis globais de envio
       window.selectedRecordsForSending = null;
+      window.lastRecordToUpdate = null;
     }
 
     async function confirmResponsible() {
@@ -3411,13 +3287,34 @@
       const unitType = document.getElementById('unit-type').value;
 
       if (!responsibleName || !unitType) {
-        showToast('Preencha todos os campos obrigatórios', 'error');
+        showToast('Preencha o Nome do Responsável e o Tipo de Unidade', 'error');
         return;
       }
 
       if (!window.selectedRecordsForSending || window.selectedRecordsForSending.length === 0) {
         showToast('Nenhum registro selecionado', 'error');
         return;
+      }
+
+      // 1. Se tínhamos uma rota para fechar, validar o KM Final
+      if (window.lastRecordToUpdate) {
+        const kmFinalInput = document.getElementById('km-final-day');
+        const newKmFinal = parseFloat(kmFinalInput.value);
+
+        if (isNaN(newKmFinal) || newKmFinal <= 0) {
+          showToast('Por favor, insira um KM Final válido.', 'error');
+          kmFinalInput.focus();
+          return;
+        }
+
+        if (newKmFinal < window.lastRecordToUpdate.km_inicial) {
+          showToast(`O KM Final (${newKmFinal}) não pode ser menor que o KM Inicial (${window.lastRecordToUpdate.km_inicial}).`, 'error');
+          kmFinalInput.focus();
+          return;
+        }
+
+        // Atualiza o objeto do registro ANTES de enviar
+        window.lastRecordToUpdate.km_final = newKmFinal;
       }
 
       isProcessing = true;
@@ -3429,13 +3326,22 @@
       let successCount = 0;
       const batch = db.batch(); // Usar lote do Firestore
 
+      // 2. Agora todos os 'selectedRecordsForSending' estão prontos para o envio
       for (const record of window.selectedRecordsForSending) {
         const recordRef = db.collection("records").doc(record.id);
-        batch.update(recordRef, {
+        
+        const dataToUpdate = {
           status: 'Enviado',
           responsavel_unidade: responsibleName,
           tipo_unidade: unitType
-        });
+        };
+
+        // 3. Se este é o registro que acabamos de fechar, adicione o km_final ao update
+        if (window.lastRecordToUpdate && record.id === window.lastRecordToUpdate.id) {
+          dataToUpdate.km_final = record.km_final; // O valor que acabamos de adicionar
+        }
+
+        batch.update(recordRef, dataToUpdate);
 
         // Atualizar array local
         const index = allRecords.findIndex(r => r.id === record.id);
@@ -3443,6 +3349,9 @@
           allRecords[index].status = 'Enviado';
           allRecords[index].responsavel_unidade = responsibleName;
           allRecords[index].tipo_unidade = unitType;
+          if (dataToUpdate.km_final) {
+             allRecords[index].km_final = dataToUpdate.km_final;
+          }
         }
         successCount++;
       }
@@ -3450,15 +3359,16 @@
       try {
         await batch.commit(); // Enviar lote para o Firebase
         
-        renderTable();
+        renderTable(); // Atualiza a tabela do condutor
         updateSelectAllCheckbox();
         
+        // Se for gestor, atualiza o dashboard também
         if (currentUser && currentUser.type === 'gestor') {
           updateManagerDashboard();
         }
 
         if (successCount > 0) {
-          showToast(`${successCount} registro(s) enviado(s) com atesto de ${responsibleName}!`, 'success');
+          showToast(`${successCount} registro(s) enviado(s) com sucesso!`, 'success');
         }
       } catch (error) {
           console.error("Erro ao enviar em lote:", error);
@@ -3469,7 +3379,7 @@
       btn.disabled = false;
       isProcessing = false;
       
-      hideResponsibleModal();
+      hideResponsibleModal(); // Limpa e esconde o modal
     }
 
     // --- FUNÇÕES DO DASHBOARD DO GESTOR ---
@@ -3482,7 +3392,6 @@
       renderManagerTable(allRecords); // Renderizar tabela completa inicialmente
       populateDriverFilter();
       updateBIAnalytics();
-renderAdvancedCharts(); // Renderiza os novos gráficos Chart.js
     }
 
     function updateDashboardStats() {
