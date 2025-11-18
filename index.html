@@ -2106,7 +2106,7 @@
        <div class="chart-header">
         <h3>
          <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18" /> <polyline points="17,6 23,6 23,12" />
-         </svg> Tendência de Reports</h3>
+         </svg> Balanço mensal</h3>
         <div class="chart-legend"><span class="legend-item"> <span class="legend-color" style="background: #10b981;"></span> Enviados </span> <span class="legend-item"> <span class="legend-color" style="background: #f59e0b;"></span> Pendentes </span>
         </div>
        </div>
@@ -2116,8 +2116,10 @@
       </div><div class="card chart-card">
        <div class="chart-header">
         <h3>
-         <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" /> <polyline points="3.27,6.96 12,12.01 20.73,6.96" /> <line x1="12" y1="22.08" x2="12" y2="12" />
-         </svg> Distribuição de KM por Condutor</h3>
+         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+  <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+  <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+</svg> Distribuição de KM por Condutor</h3>
         <div class="chart-info"><span id="km-chart-total">Total: 0 km</span>
         </div>
        </div>
@@ -3628,42 +3630,30 @@
       // (Esta função pode ser implementada no futuro)
     }
 
-    function createCharts() {
-      try {
-        createTrendChart();
-        createKMDistributionChart();
-        createStatusPieChart();
-      } catch (e) {
-        console.error("Erro ao criar gráficos:", e);
-        showToast("Erro ao renderizar gráficos", "error");
-      }
-    }
-
     function createTrendChart() {
       const canvas = document.getElementById('reports-trend-chart');
       if (!canvas) return;
       
       const ctx = canvas.getContext('2d');
 
-      // Destruir gráfico anterior para não sobrepor
+      // Destruir gráfico anterior se existir
       if (chartsInstances['reports-trend-chart']) {
         chartsInstances['reports-trend-chart'].destroy();
       }
 
       // 1. Filtrar dados APENAS do Mês Atual
       const now = new Date();
-      const currentMonth = now.getMonth(); // 0-11
+      const currentMonth = now.getMonth(); // 0 a 11
       const currentYear = now.getFullYear();
 
       let sentCount = 0;
       let pendingCount = 0;
 
       allRecords.forEach(record => {
-        // Converte a data do registro (YYYY-MM-DD) para objeto Date
-        // Usamos split para evitar problemas de fuso horário (UTC vs Local)
+        // Converte a data do registro
         let recDate = new Date();
         if (record.data && typeof record.data === 'string') {
-            const parts = record.data.split('-');
+            const parts = record.data.split('-'); // YYYY-MM-DD
             if(parts.length === 3) {
                 recDate = new Date(parts[0], parts[1] - 1, parts[2]);
             }
@@ -3679,27 +3669,29 @@
         }
       });
 
-      // 2. Dados para o gráfico
-      const data = {
-        labels: ['Enviados', 'Pendentes'],
-        datasets: [
-          {
-            label: 'Envios do Mês',
-            data: [sentCount, pendingCount],
-            backgroundColor: [
-              '#10b981', // Verde (Enviado)
-              '#f59e0b'  // Laranja (Pendente)
-            ],
-            hoverOffset: 4,
-            borderWidth: 0 // Remove bordas para visual mais limpo
-          }
-        ]
-      };
+      // Se não houver dados no mês, evitar gráfico vazio feio
+      if (sentCount === 0 && pendingCount === 0) {
+         // Opcional: desenhar algo vazio ou deixar zerado
+      }
 
-      // 3. Configuração (Exatamente como você pediu)
+      // 2. Configuração do Gráfico de Rosca (Doughnut)
       const config = {
         type: 'doughnut',
-        data: data,
+        data: {
+          labels: ['Enviados', 'Pendentes'],
+          datasets: [
+            {
+              label: 'Total',
+              data: [sentCount, pendingCount],
+              backgroundColor: [
+                '#10b981', // Verde (Enviado)
+                '#f59e0b'  // Laranja (Pendente)
+              ],
+              hoverOffset: 4,
+              borderWidth: 0
+            }
+          ]
+        },
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -3707,19 +3699,17 @@
             legend: {
               position: 'top',
               labels: {
-                  usePointStyle: true, // Bolinhas em vez de quadrados na legenda
-                  padding: 20
+                  usePointStyle: true,
+                  padding: 15,
+                  font: { size: 11 }
               }
             },
             title: {
               display: true,
-              text: 'Balanço Mensal (' + (now.toLocaleString('pt-BR', { month: 'long' })) + ')',
-              font: {
-                  size: 14
-              },
-              padding: {
-                  bottom: 20
-              }
+              text: 'Balanço de ' + now.toLocaleString('pt-BR', { month: 'long' }),
+              font: { size: 14, weight: 'bold' },
+              color: '#1e293b',
+              padding: { bottom: 10 }
             },
             tooltip: {
                 callbacks: {
@@ -3728,16 +3718,16 @@
                         const value = context.raw || 0;
                         const total = sentCount + pendingCount;
                         const percentage = total > 0 ? Math.round((value / total) * 100) + '%' : '0%';
-                        return `${label}: ${value} (${percentage})`;
+                        return ` ${label}: ${value} (${percentage})`;
                     }
                 }
             }
           },
-          cutout: '60%', // Deixa a rosca mais fina ou grossa
+          cutout: '65%', // Tamanho do buraco da rosca
         },
       };
 
-      // 4. Renderizar
+      // 3. Renderizar
       chartsInstances['reports-trend-chart'] = new Chart(ctx, config);
     }
 
