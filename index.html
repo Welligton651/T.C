@@ -3629,6 +3629,16 @@
     function generateInsights() {
       // (Esta função pode ser implementada no futuro)
     }
+function createCharts() {
+      // Esta é a função "gerente" que chama todos os gráficos
+      try {
+        if (typeof createTrendChart === 'function') createTrendChart();
+        if (typeof createKMDistributionChart === 'function') createKMDistributionChart();
+        if (typeof createStatusPieChart === 'function') createStatusPieChart();
+      } catch (e) {
+        console.error("Erro ao renderizar gráficos:", e);
+      }
+    }
 
     function createTrendChart() {
       const canvas = document.getElementById('reports-trend-chart');
