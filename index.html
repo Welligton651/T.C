@@ -2259,10 +2259,10 @@
            </svg>
            Monitor de Manutenção Preventiva (Termômetro)
          </h2>
-         <button class="btn btn-secondary" onclick="exportMaintenanceExcel()" style="background-color: #ef4444;">
-           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-           Baixar Lista de Revisão
-         </button>
+         <button class="btn btn-secondary" onclick="exportMaintenanceHTML()" style="background-color: #ef4444;">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  Baixar Relatório HTML
+</button>
        </div>
        
        <div style="display: grid; grid-template-columns: 100px 1fr 150px 150px 120px; gap: 1rem; padding: 10px; background: #f1f5f9; font-weight: bold; color: #475569; border-radius: 8px 8px 0 0; font-size: 0.85rem;">
@@ -3492,47 +3492,155 @@ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     }
 
     // Função para Exportar Excel desta lista específica
-    function exportMaintenanceExcel() {
-      // Reutiliza a lógica de agrupamento
+    // Função NOVA para Exportar Relatório HTML Bonito
+    function exportMaintenanceHTML() {
+      // 1. Preparar os dados (Lógica idêntica ao monitor da tela)
       const vehicleMap = new Map();
       allRecords.forEach(r => {
         if (r.km_final && !isNaN(r.km_final)) {
           if (!vehicleMap.has(r.placa) || r.km_final > vehicleMap.get(r.placa).km) {
-            vehicleMap.set(r.placa, { placa: r.placa, km: r.km_final, unidade: r.tipo_unidade || r.user_location });
+            vehicleMap.set(r.placa, { 
+              placa: r.placa, 
+              km: r.km_final, 
+              unidade: r.tipo_unidade || r.user_location || 'Indefinido'
+            });
           }
         }
       });
 
-      const list = Array.from(vehicleMap.values()).map(v => {
-        const prox = Math.ceil((v.km + 1) / 10000) * 10000;
-        return {
-          placa: v.placa,
-          unidade: v.unidade,
-          km_atual: v.km,
-          prox_revisao: prox,
-          falta: prox - v.km,
-          tag: `${prox / 10000}ª Revisão`
-        };
-      }).sort((a, b) => a.falta - b.falta);
+      // Calcular status e ordenar
+      const fleetStatus = Array.from(vehicleMap.values()).map(v => {
+        const proximaRevisao = Math.ceil((v.km + 1) / 10000) * 10000;
+        const falta = proximaRevisao - v.km;
+        const numRevisao = proximaRevisao / 10000;
+        
+        let statusConfig = {};
+        
+        if (falta <= 1000) {
+          statusConfig = {
+            text: 'CRÍTICO', icon: '🔥', color: '#b91c1c', bg: '#fecaca', labelClass: 'critico'
+          };
+        } else if (falta <= 3000) {
+          statusConfig = {
+            text: 'ATENÇÃO', icon: '⚠️', color: '#b45309', bg: '#fde68a', labelClass: 'atencao'
+          };
+        } else {
+          statusConfig = {
+            text: 'SEGURO', icon: '❄️', color: '#15803d', bg: '#dcfce7', labelClass: 'seguro'
+          };
+        }
 
-      // Gerar CSV
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Placa,Unidade,KM Atual,Próxima Revisão,Tag Revisão,Falta (KM),Status\n";
+        return { ...v, proximaRevisao, falta, numRevisao, statusConfig };
+      }).sort((a, b) => a.falta - b.falta); // Ordenar por urgência
 
-      list.forEach(item => {
-        let status = item.falta <= 1000 ? "CRÍTICO" : item.falta <= 3000 ? "ATENÇÃO" : "NORMAL";
-        csvContent += `${item.placa},"${item.unidade}",${item.km_atual},${item.prox_revisao},"${item.tag}",${item.falta},${status}\n`;
-      });
+      // 2. Construir o HTML
+      const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 640 640" fill="#253d70"><path d="M541.9 139.5C546.4 127.7 543.6 114.3 534.7 105.4C525.8 96.5 512.4 93.6 500.6 98.2L84.6 258.2C71.9 263 63.7 275.2 64 288.7C64.3 302.2 73.1 314.1 85.9 318.3L262.7 377.2L321.6 554C325.9 566.8 337.7 575.6 351.2 575.9C364.7 576.2 376.9 568 381.8 555.4L541.8 139.4z"/></svg>`;
 
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `monitor_revisoes_${new Date().toISOString().split('T')[0]}.csv`);
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório de Manutenção Preventiva</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; max-width: 1000px; margin: 0 auto; color: #333; background: #f8fafc; }
+            .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+            
+            .header { display: flex; align-items: center; gap: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+            .title h1 { margin: 0; color: #1e293b; font-size: 24px; }
+            .title p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
+            .meta { margin-left: auto; text-align: right; font-size: 12px; color: #94a3b8; }
+            
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            thead { background: #1e293b; color: white; }
+            th { padding: 15px; text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; }
+            td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: middle; }
+            tr:hover { background-color: #f8fafc; }
+            
+            /* Estilos de Status */
+            .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
+            
+            .critico { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+            .atencao { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+            .seguro  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+            
+            .km-cell { font-family: monospace; font-size: 14px; font-weight: 600; color: #334155; }
+            .falta-cell { font-weight: bold; }
+            
+            @media print {
+              body { background: white; padding: 0; }
+              .container { box-shadow: none; padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              ${logoSvg}
+              <div class="title">
+                <h1>Monitor de Manutenção Preventiva</h1>
+                <p>SEMCAS - Coordenação de Suporte e Logística</p>
+              </div>
+              <div class="meta">
+                Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>STATUS</th>
+                  <th>PLACA / UNIDADE</th>
+                  <th>KM ATUAL</th>
+                  <th>PRÓXIMA REVISÃO</th>
+                  <th>FALTA (KM)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${fleetStatus.map(v => `
+                  <tr style="${v.statusConfig.text === 'CRÍTICO' ? 'background-color: #fff1f2;' : ''}">
+                    <td>
+                      <span class="badge ${v.statusConfig.labelClass}">
+                        ${v.statusConfig.icon} ${v.statusConfig.text}
+                      </span>
+                    </td>
+                    <td>
+                      <div style="font-weight: bold; color: #1e293b;">${v.placa}</div>
+                      <div style="font-size: 12px; color: #64748b;">${v.unidade}</div>
+                    </td>
+                    <td class="km-cell">${v.km.toLocaleString('pt-BR')} km</td>
+                    <td>
+                      <div style="font-weight: 600; color: #334155;">${v.numRevisao}ª Revisão</div>
+                      <div style="font-size: 11px; color: #64748b;">aos ${v.proximaRevisao.toLocaleString('pt-BR')} km</div>
+                    </td>
+                    <td class="falta-cell" style="color: ${v.statusConfig.color}">
+                      ${v.falta.toLocaleString('pt-BR')} km
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #94a3b8; font-size: 12px;">
+              <p>Este relatório auxilia no controle de frota e deve ser usado como referência para agendamento de manutenções.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // 3. Gerar e baixar o arquivo
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Relatorio_Manutencao_${new Date().toISOString().split('T')[0]}.html`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
-      showToast('Lista de revisões baixada com sucesso!', 'success');
+      showToast('Relatório HTML gerado com sucesso!', 'success');
     }
     function updatePerformanceMetrics() {
        const driverStats = {};
