@@ -2248,6 +2248,31 @@
       </div>
      </div>
     </div>
+<div class="card" style="grid-column: 1 / -1;">
+       <div class="table-header">
+         <h2 style="display: flex; align-items: center; gap: 10px;">
+           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+           </svg>
+           Monitor de Manutenção Preventiva (Termômetro)
+         </h2>
+         <button class="btn btn-secondary" onclick="exportMaintenanceExcel()" style="background-color: #ef4444;">
+           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+           Baixar Lista de Revisão
+         </button>
+       </div>
+       
+       <div style="display: grid; grid-template-columns: 100px 1fr 150px 150px 120px; gap: 1rem; padding: 10px; background: #f1f5f9; font-weight: bold; color: #475569; border-radius: 8px 8px 0 0; font-size: 0.85rem;">
+         <div>Status</div>
+         <div>Veículo / Unidade</div>
+         <div>KM Atual</div>
+         <div>Próx. Revisão</div>
+         <div>Falta</div>
+       </div>
+       
+       <div id="maintenance-list" style="max-height: 400px; overflow-y: auto;">
+         </div>
+     </div>
    </div><div class="card">
     <div class="table-header">
      <h2>Ranking de Condutores</h2>
@@ -3322,6 +3347,7 @@
       renderManagerTable(allRecords); 
       populateDriverFilter();
       updateBIAnalytics(); 
+   updateMaintenanceMonitor(); 
     }
 
     function updateDashboardStats() {
@@ -3362,6 +3388,141 @@
       createCharts(); 
     }
 
+// Função principal que gera o "Gráfico de Temperatura"
+    function updateMaintenanceMonitor() {
+      const container = document.getElementById('maintenance-list');
+      if (!container) return;
+
+      // 1. Agrupar por veículo para pegar o KM mais atual de cada um
+      const vehicleMap = new Map();
+
+      allRecords.forEach(r => {
+        if (r.km_final && !isNaN(r.km_final)) {
+          // Se o veículo já existe no mapa, só atualiza se o KM for maior
+          if (!vehicleMap.has(r.placa) || r.km_final > vehicleMap.get(r.placa).km) {
+            vehicleMap.set(r.placa, {
+              placa: r.placa,
+              km: r.km_final,
+              unidade: r.tipo_unidade || r.user_location || 'Indefinido'
+            });
+          }
+        }
+      });
+
+      // 2. Calcular previsões e temperatura
+      let fleetStatus = Array.from(vehicleMap.values()).map(v => {
+        // Lógica: Revisão a cada 10.000 km
+        const intervaloRevisao = 10000;
+        const proximaRevisao = Math.ceil((v.km + 1) / intervaloRevisao) * intervaloRevisao;
+        const falta = proximaRevisao - v.km;
+        const numRevisao = proximaRevisao / 10000;
+
+        // Definir temperatura (cor e ícone)
+        let statusColor, statusIcon, statusText, bgStyle;
+        
+        if (falta <= 1000) {
+          statusColor = '#ef4444'; // Vermelho (Quente/Crítico)
+          statusIcon = '🔥';
+          statusText = 'Crítico';
+          bgStyle = 'linear-gradient(90deg, rgba(239,68,68,0.1) 0%, rgba(255,255,255,0) 100%)';
+        } else if (falta <= 3000) {
+          statusColor = '#f59e0b'; // Amarelo (Morno/Atenção)
+          statusIcon = '⚠️';
+          statusText = 'Atenção';
+          bgStyle = 'linear-gradient(90deg, rgba(245,158,11,0.1) 0%, rgba(255,255,255,0) 100%)';
+        } else {
+          statusColor = '#10b981'; // Verde/Azul (Frio/Seguro)
+          statusIcon = '❄️';
+          statusText = 'Seguro';
+          bgStyle = 'transparent';
+        }
+
+        return { ...v, proximaRevisao, falta, numRevisao, statusColor, statusIcon, statusText, bgStyle };
+      });
+
+      // 3. Ordenar: Os mais "quentes" (menor KM faltando) aparecem primeiro
+      fleetStatus.sort((a, b) => a.falta - b.falta);
+
+      // 4. Renderizar na tela
+      if (fleetStatus.length === 0) {
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Nenhum dado de veículo disponível.</div>';
+        return;
+      }
+
+      container.innerHTML = fleetStatus.map(v => `
+        <div style="display: grid; grid-template-columns: 100px 1fr 150px 150px 120px; gap: 1rem; padding: 12px 10px; border-bottom: 1px solid #eee; align-items: center; background: ${v.bgStyle};">
+          
+          <div style="color: ${v.statusColor}; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
+            <span>${v.statusIcon}</span> ${v.statusText}
+          </div>
+
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-weight: bold; color: #1e293b;">${v.placa}</span>
+            <span style="font-size: 0.75rem; color: #64748b;">${v.unidade}</span>
+          </div>
+
+          <div style="font-family: monospace; font-size: 0.95rem; color: #334155;">
+            ${v.km.toLocaleString('pt-BR')} km
+          </div>
+
+          <div>
+            <span style="background: #e2e8f0; color: #253d70; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">
+              ${v.numRevisao}ª Revisão
+            </span>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">aos ${v.proximaRevisao.toLocaleString()} km</div>
+          </div>
+
+          <div style="font-weight: bold; color: ${v.statusColor};">
+            - ${v.falta.toLocaleString()} km
+          </div>
+
+        </div>
+      `).join('');
+    }
+
+    // Função para Exportar Excel desta lista específica
+    function exportMaintenanceExcel() {
+      // Reutiliza a lógica de agrupamento
+      const vehicleMap = new Map();
+      allRecords.forEach(r => {
+        if (r.km_final && !isNaN(r.km_final)) {
+          if (!vehicleMap.has(r.placa) || r.km_final > vehicleMap.get(r.placa).km) {
+            vehicleMap.set(r.placa, { placa: r.placa, km: r.km_final, unidade: r.tipo_unidade || r.user_location });
+          }
+        }
+      });
+
+      const list = Array.from(vehicleMap.values()).map(v => {
+        const prox = Math.ceil((v.km + 1) / 10000) * 10000;
+        return {
+          placa: v.placa,
+          unidade: v.unidade,
+          km_atual: v.km,
+          prox_revisao: prox,
+          falta: prox - v.km,
+          tag: `${prox / 10000}ª Revisão`
+        };
+      }).sort((a, b) => a.falta - b.falta);
+
+      // Gerar CSV
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Placa,Unidade,KM Atual,Próxima Revisão,Tag Revisão,Falta (KM),Status\n";
+
+      list.forEach(item => {
+        let status = item.falta <= 1000 ? "CRÍTICO" : item.falta <= 3000 ? "ATENÇÃO" : "NORMAL";
+        csvContent += `${item.placa},"${item.unidade}",${item.km_atual},${item.prox_revisao},"${item.tag}",${item.falta},${status}\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `monitor_revisoes_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Lista de revisões baixada com sucesso!', 'success');
+    }
     function updatePerformanceMetrics() {
        const driverStats = {};
       
@@ -3479,72 +3640,107 @@
     }
 
     function createTrendChart() {
-      const periodEl = document.getElementById('analytics-period');
-      const period = periodEl ? parseInt(periodEl.value) : 30;
-      const days = (period === 90 || period === 365 || period === 7) ? period : 30; 
+      const canvas = document.getElementById('reports-trend-chart');
+      if (!canvas) return;
       
-      let dataMap = {};
-      for (let i = days - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        const label = `${d.getDate()}/${d.getMonth() + 1}`;
-        dataMap[dateStr] = { label: label, sent: 0, pending: 0 };
+      const ctx = canvas.getContext('2d');
+
+      // Destruir gráfico anterior para não sobrepor
+      if (chartsInstances['reports-trend-chart']) {
+        chartsInstances['reports-trend-chart'].destroy();
       }
 
-      allRecords.forEach(r => {
-        const recordDate = new Date(r.data);
-        const daysAgo = (new Date() - recordDate) / (1000 * 60 * 60 * 24);
-        
-        if (daysAgo <= days) {
-           if (dataMap[r.data]) {
-            if (r.status === 'Enviado') {
-              dataMap[r.data].sent++;
-            } else if (r.status === 'Pendente') {
-              dataMap[r.data].pending++;
+      // 1. Filtrar dados APENAS do Mês Atual
+      const now = new Date();
+      const currentMonth = now.getMonth(); // 0-11
+      const currentYear = now.getFullYear();
+
+      let sentCount = 0;
+      let pendingCount = 0;
+
+      allRecords.forEach(record => {
+        // Converte a data do registro (YYYY-MM-DD) para objeto Date
+        // Usamos split para evitar problemas de fuso horário (UTC vs Local)
+        let recDate = new Date();
+        if (record.data && typeof record.data === 'string') {
+            const parts = record.data.split('-');
+            if(parts.length === 3) {
+                recDate = new Date(parts[0], parts[1] - 1, parts[2]);
             }
+        }
+
+        // Se for do mês e ano atuais, conta
+        if (recDate.getMonth() === currentMonth && recDate.getFullYear() === currentYear) {
+          if (record.status === 'Enviado') {
+            sentCount++;
+          } else if (record.status === 'Pendente') {
+            pendingCount++;
           }
         }
       });
 
-      const labels = Object.values(dataMap).map(d => d.label);
-      const sentData = Object.values(dataMap).map(d => d.sent);
-      const pendingData = Object.values(dataMap).map(d => d.pending);
+      // 2. Dados para o gráfico
+      const data = {
+        labels: ['Enviados', 'Pendentes'],
+        datasets: [
+          {
+            label: 'Envios do Mês',
+            data: [sentCount, pendingCount],
+            backgroundColor: [
+              '#10b981', // Verde (Enviado)
+              '#f59e0b'  // Laranja (Pendente)
+            ],
+            hoverOffset: 4,
+            borderWidth: 0 // Remove bordas para visual mais limpo
+          }
+        ]
+      };
 
-      const ctx = document.getElementById('reports-trend-chart').getContext('2d');
-      if (chartsInstances['reports-trend-chart']) {
-        chartsInstances['reports-trend-chart'].destroy();
-      }
-      chartsInstances['reports-trend-chart'] = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'Enviados',
-              data: sentData,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              fill: true,
-              tension: 0.4
-            },
-            {
-              label: 'Pendentes',
-              data: pendingData,
-              borderColor: '#f59e0b',
-              backgroundColor: 'rgba(245, 158, 11, 0.1)',
-              fill: true,
-              tension: 0.4
-            }
-          ]
-        },
+      // 3. Configuração (Exatamente como você pediu)
+      const config = {
+        type: 'doughnut',
+        data: data,
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true } }
-        }
-      });
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                  usePointStyle: true, // Bolinhas em vez de quadrados na legenda
+                  padding: 20
+              }
+            },
+            title: {
+              display: true,
+              text: 'Balanço Mensal (' + (now.toLocaleString('pt-BR', { month: 'long' })) + ')',
+              font: {
+                  size: 14
+              },
+              padding: {
+                  bottom: 20
+              }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        const total = sentCount + pendingCount;
+                        const percentage = total > 0 ? Math.round((value / total) * 100) + '%' : '0%';
+                        return `${label}: ${value} (${percentage})`;
+                    }
+                }
+            }
+          },
+          cutout: '60%', // Deixa a rosca mais fina ou grossa
+        },
+      };
+
+      // 4. Renderizar
+      chartsInstances['reports-trend-chart'] = new Chart(ctx, config);
     }
+
 
     function createKMDistributionChart() {
       const driverKm = {};
@@ -3870,8 +4066,189 @@
       showToast('Função de Exportar Ranking em desenvolvimento.', 'success');
     }
 
+    // Função atualizada: Gera e baixa um arquivo .html completo com logo e tabela
     function exportToPDF() {
-      showToast('Função de Exportar PDF em desenvolvimento.', 'success');
+      const records = getFilteredRecords(); // Usa os filtros atuais da tabela
+      
+      if (records.length === 0) {
+        showToast('Nenhum dado para gerar relatório', 'error');
+        return;
+      }
+
+      showToast('Gerando arquivo do relatório...', 'success');
+
+      // Cálculos para o cabeçalho do relatório
+      const totalReports = records.length;
+      const sentReports = records.filter(r => r.status === 'Enviado').length;
+      const pendingReports = records.filter(r => r.status === 'Pendente').length;
+      const totalKm = records.reduce((sum, r) => {
+        if (r.km_final !== null && r.km_final !== undefined && !isNaN(r.km_final) && r.km_final > r.km_inicial) {
+          return sum + (r.km_final - r.km_inicial);
+        }
+        return sum;
+      }, 0);
+
+      // Helper para formatar data
+      const formatDate = (dateStr) => {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        date.setDate(date.getDate() + 1); // Ajuste de fuso
+        return date.toLocaleDateString('pt-BR');
+      };
+
+      // A Logo SVG do seu sistema (para embutir no relatório)
+      const logoSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 640 640" fill="#253d70">
+          <path d="M541.9 139.5C546.4 127.7 543.6 114.3 534.7 105.4C525.8 96.5 512.4 93.6 500.6 98.2L84.6 258.2C71.9 263 63.7 275.2 64 288.7C64.3 302.2 73.1 314.1 85.9 318.3L262.7 377.2L321.6 554C325.9 566.8 337.7 575.6 351.2 575.9C364.7 576.2 376.9 568 381.8 555.4L541.8 139.4z"/>
+        </svg>
+      `;
+
+      // Conteúdo HTML do Relatório
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório de Tráfego - SEMCAS</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; padding: 40px; max-width: 1200px; margin: 0 auto; background: #f9f9f9; }
+            .report-container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+            
+            /* Cabeçalho */
+            .header { display: flex; align-items: center; border-bottom: 2px solid #253d70; padding-bottom: 20px; margin-bottom: 30px; }
+            .logo { margin-right: 20px; }
+            .title-group h1 { margin: 0; color: #253d70; font-size: 24px; text-transform: uppercase; }
+            .title-group p { margin: 5px 0 0; color: #666; font-size: 14px; }
+            .meta-info { margin-left: auto; text-align: right; font-size: 12px; color: #888; }
+
+            /* Resumo em Cards */
+            .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+            .card { background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #253d70; text-align: center; }
+            .card h3 { margin: 0; font-size: 24px; color: #253d70; }
+            .card p { margin: 5px 0 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 600; }
+            
+            /* Tabela */
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            thead { background: #253d70; color: white; }
+            th { padding: 12px; text-align: left; font-weight: 600; letter-spacing: 0.5px; }
+            td { padding: 10px 12px; border-bottom: 1px solid #eee; color: #444; }
+            tr:nth-child(even) { background-color: #f8faff; }
+            tr:hover { background-color: #f1f5f9; }
+            
+            /* Badges de Status */
+            .badge { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; display: inline-block; }
+            .enviado { background: #d1fae5; color: #065f46; }
+            .pendente { background: #fef3c7; color: #92400e; }
+            
+            /* Footer */
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 11px; color: #999; }
+            
+            /* Estilo para Impressão real (caso abram o HTML e imprimam) */
+            @media print {
+              body { background: white; padding: 0; }
+              .report-container { box-shadow: none; padding: 0; }
+              .card { border: 1px solid #ddd; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="report-container">
+            <header class="header">
+              <div class="logo">${logoSvg}</div>
+              <div class="title-group">
+                <h1>Relatório de Tráfego</h1>
+                <p>COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS</p>
+              </div>
+              <div class="meta-info">
+                <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                <p>Solicitante: ${currentUser ? currentUser.name : 'Sistema'}</p>
+              </div>
+            </header>
+
+            <div class="summary">
+              <div class="card">
+                <h3>${totalReports}</h3>
+                <p>Total de Reports</p>
+              </div>
+              <div class="card" style="border-color: #10b981;">
+                <h3>${sentReports}</h3>
+                <p>Enviados</p>
+              </div>
+              <div class="card" style="border-color: #f59e0b;">
+                <h3>${pendingReports}</h3>
+                <p>Pendentes</p>
+              </div>
+              <div class="card" style="border-color: #8b5cf6;">
+                <h3>${totalKm.toFixed(1)} km</h3>
+                <p>Total Rodado</p>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Condutor</th>
+                  <th>Placa</th>
+                  <th>Data</th>
+                  <th>Destino</th>
+                  <th>KM Inicial</th>
+                  <th>KM Final</th>
+                  <th>Distância</th>
+                  <th>Status</th>
+                  <th>Lotação</th>
+                  <th>Responsável</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${records.map(r => {
+                  const dist = (r.km_final !== null && r.km_final > r.km_inicial) 
+                    ? (r.km_final - r.km_inicial).toFixed(1) + ' km' 
+                    : '-';
+                  const kmFinal = r.km_final ? r.km_final.toFixed(1) + ' km' : '-';
+                  const statusClass = r.status === 'Enviado' ? 'enviado' : 'pendente';
+                  
+                  return `
+                  <tr>
+                    <td><strong>${r.condutor}</strong></td>
+                    <td>${r.placa}</td>
+                    <td>${formatDate(r.data)}</td>
+                    <td>${r.destino}</td>
+                    <td>${r.km_inicial.toFixed(1)} km</td>
+                    <td>${kmFinal}</td>
+                    <td style="font-weight:bold; color: #253d70;">${dist}</td>
+                    <td><span class="badge ${statusClass}">${r.status}</span></td>
+                    <td>${r.user_location || '-'}</td>
+                    <td>${r.responsavel_unidade || '-'}</td>
+                  </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+
+            <div class="footer">
+              <p>Este documento é um relatório gerado automaticamente pelo Sistema de Controle de Tráfego.</p>
+              <p>SEMCAS - Secretaria Municipal da Criança e Assistência Social</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Criação do Blob e Download Automático
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      const fileName = `Relatorio_Trafego_${new Date().toISOString().split('T')[0]}.html`;
+      
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Limpeza
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
 
     function exportToExcel() {
@@ -4237,105 +4614,72 @@
       updateBIAnalytics();
     }
 
+    // =================================================================
+    //  MÓDULO DE INTELIGÊNCIA E ANÁLISE AVANÇADA (ATIVADO)
+    // =================================================================
+
+    // 1. Lógica e Exibição da Análise Preditiva
     function showPredictiveAnalysis() {
+      if (allRecords.length < 5) {
+        showToast('São necessários pelo menos 5 registros para gerar previsões.', 'error');
+        return;
+      }
+
+      const predictions = calculatePredictions();
+      
+      // Cria o modal dinamicamente
       const modal = document.createElement('div');
       modal.className = 'modal-overlay';
       
-      // Calcular previsões baseadas nos dados existentes
-      const predictions = calculatePredictions();
+      // Define ícone e cor da tendência
+      const trendIcon = predictions.efficiencyTrend >= 0 ? 
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>' : 
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M23 18l-9.5-9.5-5 5L1 6"/><path d="M17 18h6v-6"/></svg>';
       
+      const trendColor = predictions.efficiencyTrend >= 0 ? '#10b981' : '#ef4444';
+      const trendText = predictions.efficiencyTrend >= 0 ? 'Melhorando' : 'Caindo';
+
       modal.innerHTML = `
-        <div class="modal" style="max-width: 800px;">
+        <div class="modal" style="max-width: 700px;">
           <div class="modal-header">
-            <h3 class="modal-title">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#253d70" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
-                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-                <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
-                <line x1="12" y1="22.08" x2="12" y2="12"/>
-              </svg>
-              Análise Preditiva
-            </h3>
-            <p class="modal-subtitle">Previsões baseadas nos dados históricos do sistema</p>
+            <h3 class="modal-title">🔮 Análise Preditiva (Próximos 30 Dias)</h3>
+            <p class="modal-subtitle">Estimativas baseadas no histórico de uso recente</p>
           </div>
           
-          <div style="display: grid; gap: 1.5rem; margin-bottom: 2rem;">
-            <div class="insight-card success">
-              <div class="insight-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
-                  <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/>
-                  <polyline points="17,6 23,6 23,12"/>
-                </svg>
-              </div>
-              <div class="insight-content">
-                <h4>Previsão de Reports - Próximos 30 dias</h4>
-                <p><strong>${predictions.nextMonthReports}</strong> reports estimados baseados na tendência atual de <strong>${predictions.dailyAverage.toFixed(1)}</strong> reports/dia.</p>
-              </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="dashboard-card" style="flex-direction: column; align-items: flex-start; padding: 1rem;">
+               <div style="font-size: 0.85rem; color: #64748b;">Previsão de Reports</div>
+               <div style="font-size: 1.8rem; font-weight: bold; color: #253d70;">~${predictions.nextMonthReports}</div>
+               <div style="font-size: 0.75rem; color: #10b981;">Baseado em ${predictions.dailyAvg.toFixed(1)} reports/dia</div>
             </div>
-            
-            <div class="insight-card warning">
-              <div class="insight-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
-                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-                  <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
-                  <line x1="12" y1="22.08" x2="12" y2="12"/>
-                </svg>
-              </div>
-              <div class="insight-content">
-                <h4>Previsão de KM - Próximo mês</h4>
-                <p>Estimativa de <strong>${predictions.nextMonthKM.toFixed(1)} km</strong> rodados, com base na média atual de <strong>${predictions.kmPerDay.toFixed(1)} km/dia</strong>.</p>
-              </div>
-            </div>
-            
-            <div class="insight-card ${predictions.efficiencyTrend >= 0 ? 'success' : 'danger'}">
-              <div class="insight-icon">
-                ${predictions.efficiencyTrend >= 0 ? 
-                  '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' : 
-                  '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
-                }
-              </div>
-              <div class="insight-content">
-                <h4>Tendência de Eficiência</h4>
-                <p>A eficiência está ${predictions.efficiencyTrend >= 0 ? 'melhorando' : 'diminuindo'} em <strong>${Math.abs(predictions.efficiencyTrend).toFixed(1)}%</strong> comparado ao período anterior.</p>
-              </div>
-            </div>
-            
-            <div class="insight-card">
-              <div class="insight-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 010 7.75"/>
-                </svg>
-              </div>
-              <div class="insight-content">
-                <h4>Análise de Condutores</h4>
-                <p>Condutor mais ativo: <strong>${predictions.topDriver}</strong> com <strong>${predictions.topDriverReports}</strong> reports. Recomenda-se reconhecimento.</p>
-              </div>
-            </div>
-            
-            <div class="insight-card warning">
-              <div class="insight-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M16 12l-4-4-4 4"/>
-                  <path d="M12 16V8"/>
-                </svg>
-              </div>
-              <div class="insight-content">
-                <h4>Recomendações</h4>
-                <p>${predictions.recommendations.join(' ')}</p>
-              </div>
+
+            <div class="dashboard-card" style="flex-direction: column; align-items: flex-start; padding: 1rem;">
+               <div style="font-size: 0.85rem; color: #64748b;">Previsão de KM</div>
+               <div style="font-size: 1.8rem; font-weight: bold; color: #3b82f6;">~${predictions.nextMonthKM.toLocaleString('pt-BR')} km</div>
+               <div style="font-size: 0.75rem; color: #3b82f6;">Média projetada</div>
             </div>
           </div>
 
-          <div class="button-group">
-            <button class="btn btn-primary" onclick="closePredictiveModal()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 6L9 17l-5-5"/>
-              </svg>
-              Entendi
-            </button>
+          <div style="background: #f8fafc; border-left: 4px solid ${trendColor}; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+             <div style="background: white; padding: 8px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${trendIcon}</div>
+             <div>
+                <h4 style="margin: 0; color: #1e293b;">Tendência de Eficiência: ${trendText}</h4>
+                <p style="margin: 5px 0 0; font-size: 0.9rem; color: #64748b;">
+                  A taxa de conclusão variou <strong>${predictions.efficiencyTrend.toFixed(1)}%</strong> nos últimos 15 dias.
+                </p>
+             </div>
+          </div>
+
+          <div class="insight-card warning">
+             <div class="insight-icon">💡</div>
+             <div class="insight-content">
+               <h4>Sugestão do Sistema</h4>
+               <p>${predictions.recommendation}</p>
+             </div>
+          </div>
+
+          <div class="button-group" style="margin-top: 1.5rem;">
+            <button class="btn btn-primary" onclick="closePredictiveModal()" style="width: 100%;">Fechar Análise</button>
           </div>
         </div>
       `;
@@ -4344,108 +4688,172 @@
       window.currentPredictiveModal = modal;
     }
 
+    function calculatePredictions() {
+      // Filtra últimos 30 dias
+      const now = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(now.getDate() - 30);
+      
+      const recentRecords = allRecords.filter(r => {
+        let d = r.data;
+        if (typeof d === 'string') d = new Date(d.split('-').join('/')); // Fix simples para data
+        return d >= thirtyDaysAgo;
+      });
+
+      // Se não tiver dados recentes suficientes, usa todos
+      const dataset = recentRecords.length > 0 ? recentRecords : allRecords;
+      const periodDays = recentRecords.length > 0 ? 30 : 1; // Evitar divisão por zero
+
+      // 1. Média de Reports por dia
+      const dailyAvg = dataset.length / periodDays;
+      const nextMonthReports = Math.ceil(dailyAvg * 30);
+
+      // 2. Média de KM
+      const totalKm = dataset.reduce((sum, r) => {
+         if (r.km_final && r.km_final > r.km_inicial) return sum + (r.km_final - r.km_inicial);
+         return sum;
+      }, 0);
+      const nextMonthKM = Math.ceil((totalKm / dataset.length) * nextMonthReports) || 0;
+
+      // 3. Tendência de Eficiência (Comparar primeira metade vs segunda metade do dataset)
+      const half = Math.floor(dataset.length / 2);
+      const firstHalf = dataset.slice(0, half);
+      const secondHalf = dataset.slice(half);
+
+      const getEfficiency = (arr) => {
+        if (!arr.length) return 0;
+        const sent = arr.filter(r => r.status === 'Enviado').length;
+        return (sent / arr.length) * 100;
+      };
+
+      const oldEff = getEfficiency(firstHalf);
+      const newEff = getEfficiency(secondHalf);
+      const efficiencyTrend = newEff - oldEff;
+
+      // 4. Gerar Recomendação
+      let recommendation = "O fluxo está estável. Continue monitorando.";
+      if (efficiencyTrend < -10) recommendation = "Atenção: A taxa de envios caiu drasticamente. Verifique se há gargalos na equipe.";
+      else if (efficiencyTrend > 10) recommendation = "Ótimo trabalho! A eficiência operacional está aumentando.";
+      else if (nextMonthKM > 5000) recommendation = "Previsão de alta quilometragem. Verifique a necessidade de manutenção preventiva na frota.";
+
+      return { nextMonthReports, nextMonthKM, dailyAvg, efficiencyTrend, recommendation };
+    }
+
+    // 2. Lógica de Detecção de Anomalias
     function detectAnomalies() {
       const anomalies = [];
-      
-      // Detectar picos de atividade
-      const dailyActivity = {};
-      allRecords.forEach(record => {
-        const date = record.data;
-        dailyActivity[date] = (dailyActivity[date] || 0) + 1;
-      });
-      
-      const activities = Object.values(dailyActivity);
-      const avgActivity = activities.reduce((sum, val) => sum + val, 0) / activities.length;
-      const threshold = avgActivity * 2;
-      
-      Object.entries(dailyActivity).forEach(([date, activity]) => {
-        if (activity > threshold) {
-          anomalies.push({
-            type: 'high_activity',
-            date: new Date(date).toLocaleDateString('pt-BR'),
-            value: activity,
-            description: `Pico de atividade: ${activity} reports em um dia (média: ${avgActivity.toFixed(1)})`
-          });
-        }
-      });
-      
-      // Detectar condutores com padrões estranhos
-      const driverStats = {};
-      allRecords.forEach(record => {
-        const driver = record.condutor;
-        if (!driverStats[driver]) {
-          driverStats[driver] = { reports: 0, totalKm: 0, pendingRatio: 0 };
-        }
-        
-        driverStats[driver].reports++;
-        if (record.km_final !== null) {
-          driverStats[driver].totalKm += (record.km_final - record.km_inicial);
-        }
-        if (record.status === 'Pendente') {
-          driverStats[driver].pendingRatio++;
-        }
-      });
-      
-      Object.entries(driverStats).forEach(([driver, stats]) => {
-        const pendingPercentage = (stats.pendingRatio / stats.reports) * 100;
-        const avgKmPerReport = stats.totalKm / stats.reports;
-        
-        if (pendingPercentage > 80) {
-          anomalies.push({
-            type: 'high_pending',
-            driver: driver.split(' ')[0],
-            value: pendingPercentage.toFixed(1),
-            description: `${driver.split(' ')[0]} tem ${pendingPercentage.toFixed(1)}% de reports pendentes`
-          });
-        }
-        
-        if (avgKmPerReport > 100) {
+
+      // Regra 1: Reports com KM muito alto (> 500km em uma rota urbana é suspeito)
+      allRecords.forEach(r => {
+        if (r.km_final && (r.km_final - r.km_inicial) > 400) {
           anomalies.push({
             type: 'high_km',
-            driver: driver.split(' ')[0],
-            value: avgKmPerReport.toFixed(1),
-            description: `${driver.split(' ')[0]} tem média muito alta: ${avgKmPerReport.toFixed(1)} km/report`
+            title: 'Distância Anormal',
+            desc: `O veículo ${r.placa} percorreu ${(r.km_final - r.km_inicial).toFixed(1)}km em uma única rota para "${r.destino}".`,
+            severity: 'danger'
           });
         }
       });
-      
-      // Detectar dias sem atividade
-      const today = new Date();
-      const last7Days = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        if (!dailyActivity[dateStr]) {
-          last7Days.push(date.toLocaleDateString('pt-BR'));
+
+      // Regra 2: Veículos que não rodam há muito tempo (Inatividade)
+      const lastSeen = {};
+      allRecords.forEach(r => {
+        if (!lastSeen[r.placa] || r.data > lastSeen[r.placa]) {
+          lastSeen[r.placa] = r.data;
         }
-      }
+      });
       
-      if (last7Days.length > 2) {
-        anomalies.push({
-          type: 'no_activity',
-          value: last7Days.length,
-          description: `${last7Days.length} dias sem atividade na última semana`
-        });
-      }
+      const today = new Date();
+      Object.keys(lastSeen).forEach(placa => {
+        const lastDate = new Date(lastSeen[placa].split('-').join('/'));
+        const diffTime = Math.abs(today - lastDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        if (diffDays > 15) {
+           anomalies.push({
+            type: 'inactivity',
+            title: 'Veículo Parado',
+            desc: `O veículo ${placa} não registra atividades há ${diffDays} dias.`,
+            severity: 'warning'
+          });
+        }
+      });
+
+      // Regra 3: Muitos reports pendentes para um mesmo condutor
+      const driverPending = {};
+      allRecords.forEach(r => {
+        if(r.status === 'Pendente') {
+          driverPending[r.condutor] = (driverPending[r.condutor] || 0) + 1;
+        }
+      });
       
+      Object.keys(driverPending).forEach(driver => {
+        if (driverPending[driver] >= 3) {
+           anomalies.push({
+            type: 'backlog',
+            title: 'Acúmulo de Pendências',
+            desc: `O condutor ${driver} possui ${driverPending[driver]} reports não finalizados.`,
+            severity: 'warning'
+          });
+        }
+      });
+
       showAnomaliesModal(anomalies);
     }
 
-    function calculatePredictions() {
-      // (Esta função permanece a mesma)
-    }
-
-    function detectAnomalies() {
-      showToast('Detecção de Anomalias em desenvolvimento.', 'success');
-    }
-
     function showAnomaliesModal(anomalies) {
-      // (Esta função permanece a mesma)
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      
+      let contentHtml = '';
+      
+      if (anomalies.length === 0) {
+        contentHtml = `
+          <div class="empty-state" style="padding: 2rem;">
+            <div style="font-size: 3rem;">✅</div>
+            <h3 style="color: #10b981; margin: 10px 0;">Tudo Certo!</h3>
+            <p>O sistema não detectou nenhuma anomalia nos registros atuais.</p>
+          </div>
+        `;
+      } else {
+        contentHtml = `<div style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
+          ${anomalies.map(a => `
+            <div class="insight-card ${a.severity}" style="padding: 1rem;">
+              <div class="insight-icon">${a.severity === 'danger' ? '🚨' : '⚠️'}</div>
+              <div class="insight-content">
+                <h4 style="font-size: 1rem;">${a.title}</h4>
+                <p style="font-size: 0.9rem;">${a.desc}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>`;
+      }
+
+      modal.innerHTML = `
+        <div class="modal" style="max-width: 600px;">
+          <div class="modal-header">
+            <h3 class="modal-title">⚠️ Detecção de Anomalias</h3>
+            <p class="modal-subtitle">O sistema varreu a base de dados em busca de padrões irregulares</p>
+          </div>
+          ${contentHtml}
+          <div class="button-group" style="margin-top: 1.5rem;">
+            <button class="btn btn-primary" onclick="closeAnomaliesModal()" style="width: 100%;">Entendi</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      window.currentAnomaliesModal = modal;
     }
 
     function getAnomalyTitle(type) {
-      // (Esta função permanece a mesma)
+      // Função auxiliar caso precise usar os tipos
+      const titles = {
+        'high_km': 'Quilometragem Excessiva',
+        'inactivity': 'Inatividade de Veículo',
+        'backlog': 'Pendências Acumuladas'
+      };
+      return titles[type] || 'Anomalia Detectada';
     }
 
     function closePredictiveModal() {
