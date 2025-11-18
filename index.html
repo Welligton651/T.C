@@ -3875,11 +3875,359 @@
     }
 
     function exportToExcel() {
-      showToast('Função de Exportar Excel em desenvolvimento.', 'success');
+      const records = getFilteredRecords();
+      
+      let htmlContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8">
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+          <style>
+            .header { 
+              font-weight: bold; 
+              font-size: 16px; 
+              text-align: center; 
+              background-color: #253d70; 
+              color: white; 
+              padding: 10px;
+            }
+            .subheader { 
+              font-weight: bold; 
+              font-size: 14px; 
+              text-align: center; 
+              background-color: #f8f9fa; 
+              padding: 8px;
+            }
+            .summary { 
+              background-color: #e3f2fd; 
+              font-weight: bold; 
+              text-align: center; 
+              padding: 5px;
+            }
+            table { 
+              border-collapse: collapse; 
+              width: 100%; 
+              font-family: Arial, sans-serif;
+            }
+            th { 
+              background-color: #253d70; 
+              color: white; 
+              font-weight: bold; 
+              text-align: center; 
+              padding: 8px; 
+              border: 1px solid #000;
+            }
+            td { 
+              padding: 6px; 
+              border: 1px solid #ccc; 
+              text-align: left;
+            }
+            .number { text-align: right; }
+            .center { text-align: center; }
+            .status-enviado { background-color: #d1fae5; color: #065f46; font-weight: bold; }
+            .status-pendente { background-color: #fef3c7; color: #92400e; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <tr>
+              <td colspan="11" class="header">SISTEMA DE CONTROLE DE TRÁFEGO</td>
+            </tr>
+            <tr>
+              <td colspan="11" class="subheader">COORDENAÇÃO DE SUPORTE E LOGÍSTICA - SEMCAS</td>
+            </tr>
+            <tr>
+              <td colspan="11" class="subheader">Relatório Detalhado - ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</td>
+            </tr>
+            <tr><td colspan="11"></td></tr>
+            
+            <tr>
+              <td colspan="3" class="summary">Total de Reports: ${records.length}</td>
+              <td colspan="3" class="summary">Reports Enviados: ${records.filter(r => r.status === 'Enviado').length}</td>
+              <td colspan="3" class="summary">Reports Pendentes: ${records.filter(r => r.status === 'Pendente').length}</td>
+              <td colspan="2" class="summary">Total KM: ${records.reduce((sum, r) => sum + (r.km_final - r.km_inicial), 0).toFixed(1)} km</td>
+            </tr>
+            <tr><td colspan="11"></td></tr>
+            
+            <tr>
+              <th>Condutor</th>
+              <th>Placa</th>
+              <th>Data</th>
+              <th>Destino</th>
+              <th>KM Inicial</th>
+              <th>KM Final</th>
+              <th>Distância (km)</th>
+              <th>Status</th>
+              <th>Lotação</th>
+              <th>Responsável</th>
+              <th>Tipo Unidade</th>
+            </tr>
+      `;
+
+      records.forEach(record => {
+        const kmFinal = record.km_final !== null ? record.km_final.toFixed(1) : 'Aguardando...';
+        const distancia = record.km_final !== null ? (record.km_final - record.km_inicial).toFixed(1) : '-';
+        const dataFormatada = new Date(record.data).toLocaleDateString('pt-BR');
+        const responsavel = record.responsavel_unidade || '-';
+        const tipoUnidade = record.tipo_unidade || '-';
+        const statusClass = record.status === 'Enviado' ? 'status-enviado' : 'status-pendente';
+        
+        htmlContent += `
+          <tr>
+            <td>${record.condutor}</td>
+            <td class="center">${record.placa}</td>
+            <td class="center">${dataFormatada}</td>
+            <td>${record.destino}</td>
+            <td class="number">${record.km_inicial.toFixed(1)}</td>
+            <td class="number">${kmFinal}</td>
+            <td class="number">${distancia}</td>
+            <td class="center ${statusClass}">${record.status}</td>
+            <td>${record.user_location}</td>
+            <td>${responsavel}</td>
+            <td>${tipoUnidade}</td>
+          </tr>
+        `;
+      });
+
+      htmlContent += `
+            <tr><td colspan="11"></td></tr>
+            <tr>
+              <td colspan="11" class="subheader">Relatório gerado por: Welligton Ferreira (Gestor) - Sistema de Controle de Tráfego</td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([htmlContent], { 
+        type: 'application/vnd.ms-excel;charset=utf-8' 
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `relatorio_trafego_${new Date().toISOString().split('T')[0]}.xls`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Relatório Excel exportado com sucesso!', 'success');
     }
     
     function showBackupModal() {
-      showToast('Função de Backup via Firebase não implementada', 'error');
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#253d70" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+              </svg>
+              Gerenciamento de Dados
+            </h3>
+            <p class="modal-subtitle">Faça backup ou restaure os dados do sistema</p>
+          </div>
+          
+          <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 1rem;">
+              <h4 style="margin: 0 0 0.5rem 0; color: #0c4a6e;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0c4a6e" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="7,10 12,15 17,10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Fazer Backup
+              </h4>
+              <p style="margin: 0 0 1rem 0; font-size: 0.875rem; color: #0369a1;">
+                Baixe todos os dados do sistema (usuários, registros, configurações)
+              </p>
+              <button class="btn btn-primary" onclick="exportBackup()" style="width: 100%;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="7,10 12,15 17,10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Fazer Backup
+              </button>
+            </div>
+            
+            <div style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 1rem;">
+              <h4 style="margin: 0 0 0.5rem 0; color: #14532d;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14532d" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="17,10 12,5 7,10"/>
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                </svg>
+                Restaurar Backup
+              </h4>
+              <p style="margin: 0 0 1rem 0; font-size: 0.875rem; color: #166534;">
+                Carregue um arquivo de backup para restaurar os dados
+              </p>
+              <input type="file" id="backup-file-input" accept=".json" style="margin-bottom: 1rem; width: 100%;">
+              <button class="btn btn-secondary" onclick="importBackup()" style="width: 100%;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="17,10 12,5 7,10"/>
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                </svg>
+                Restaurar Backup
+              </button>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-danger" onclick="closeBackupModal()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+              Fechar
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      window.currentBackupModal = modal;
+    }
+
+    function closeBackupModal() {
+      if (window.currentBackupModal) {
+        window.currentBackupModal.remove();
+        window.currentBackupModal = null;
+      }
+    }
+
+    function exportBackup() {
+      const backupData = DataStorage.exportAllData();
+      if (!backupData) {
+        showToast('Erro ao gerar backup', 'error');
+        return;
+      }
+
+      const blob = new Blob([backupData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `backup_sistema_trafego_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Backup realizado com sucesso!', 'success');
+      closeBackupModal();
+    }
+
+    function importBackup() {
+      const fileInput = document.getElementById('backup-file-input');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showToast('Selecione um arquivo de backup', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const success = DataStorage.importAllData(e.target.result);
+          if (success) {
+            registeredUsers = DataStorage.loadUsers();
+            loadLocalData();
+            loadManagerPhoto();
+            showToast('Backup restaurado com sucesso! Recarregue a página.', 'success');
+            closeBackupModal();
+          } else {
+            showToast('Erro ao restaurar backup. Verifique o arquivo.', 'error');
+          }
+        } catch (error) {
+          showToast('Arquivo de backup inválido', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function showStorageStats() {
+      const stats = DataStorage.getStorageStats();
+      if (!stats) {
+        showToast('Erro ao obter estatísticas', 'error');
+        return;
+      }
+
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#253d70" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              Estatísticas de Armazenamento
+            </h3>
+            <p class="modal-subtitle">Uso atual do armazenamento local</p>
+          </div>
+          
+          <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="route-summary">
+              <div class="route-item">
+                <span class="route-label">Usuários cadastrados:</span>
+                <span class="route-value">${stats.users}</span>
+              </div>
+              <div class="route-item">
+                <span class="route-label">Registros de tráfego:</span>
+                <span class="route-value">${stats.records}</span>
+              </div>
+              <div class="route-item">
+                <span class="route-label">Foto do gestor:</span>
+                <span class="route-value">${stats.managerPhoto}</span>
+              </div>
+              <div class="route-item">
+                <span class="route-label">Total utilizado:</span>
+                <span class="route-value"><strong>${stats.total}</strong></span>
+              </div>
+              <div class="route-item">
+                <span class="route-label">Porcentagem usada:</span>
+                <span class="route-value"><strong>${stats.percentage}%</strong></span>
+              </div>
+              <div class="route-item">
+                <span class="route-label">Espaço disponível:</span>
+                <span class="route-value">${stats.available}</span>
+              </div>
+            </div>
+            
+            <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 1rem;">
+              <p style="margin: 0; font-size: 0.875rem; color: #92400e;">
+                <strong>Dica:</strong> Faça backup regularmente dos dados. Se o armazenamento estiver acima de 80%, considere limpar registros antigos.
+              </p>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-primary" onclick="closeStatsModal()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+              Entendi
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      window.currentStatsModal = modal;
+    }
+
+    function closeStatsModal() {
+      if (window.currentStatsModal) {
+        window.currentStatsModal.remove();
+        window.currentStatsModal = null;
+      }
     }
     function showStorageStats() {
       showToast('Estatísticas agora são gerenciadas pelo Firebase', 'success');
@@ -3890,7 +4238,198 @@
     }
 
     function showPredictiveAnalysis() {
-      showToast('Análise Preditiva em desenvolvimento.', 'success');
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      
+      // Calcular previsões baseadas nos dados existentes
+      const predictions = calculatePredictions();
+      
+      modal.innerHTML = `
+        <div class="modal" style="max-width: 800px;">
+          <div class="modal-header">
+            <h3 class="modal-title">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#253d70" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+              Análise Preditiva
+            </h3>
+            <p class="modal-subtitle">Previsões baseadas nos dados históricos do sistema</p>
+          </div>
+          
+          <div style="display: grid; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="insight-card success">
+              <div class="insight-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                  <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/>
+                  <polyline points="17,6 23,6 23,12"/>
+                </svg>
+              </div>
+              <div class="insight-content">
+                <h4>Previsão de Reports - Próximos 30 dias</h4>
+                <p><strong>${predictions.nextMonthReports}</strong> reports estimados baseados na tendência atual de <strong>${predictions.dailyAverage.toFixed(1)}</strong> reports/dia.</p>
+              </div>
+            </div>
+            
+            <div class="insight-card warning">
+              <div class="insight-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                  <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                  <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+              </div>
+              <div class="insight-content">
+                <h4>Previsão de KM - Próximo mês</h4>
+                <p>Estimativa de <strong>${predictions.nextMonthKM.toFixed(1)} km</strong> rodados, com base na média atual de <strong>${predictions.kmPerDay.toFixed(1)} km/dia</strong>.</p>
+              </div>
+            </div>
+            
+            <div class="insight-card ${predictions.efficiencyTrend >= 0 ? 'success' : 'danger'}">
+              <div class="insight-icon">
+                ${predictions.efficiencyTrend >= 0 ? 
+                  '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' : 
+                  '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+                }
+              </div>
+              <div class="insight-content">
+                <h4>Tendência de Eficiência</h4>
+                <p>A eficiência está ${predictions.efficiencyTrend >= 0 ? 'melhorando' : 'diminuindo'} em <strong>${Math.abs(predictions.efficiencyTrend).toFixed(1)}%</strong> comparado ao período anterior.</p>
+              </div>
+            </div>
+            
+            <div class="insight-card">
+              <div class="insight-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 010 7.75"/>
+                </svg>
+              </div>
+              <div class="insight-content">
+                <h4>Análise de Condutores</h4>
+                <p>Condutor mais ativo: <strong>${predictions.topDriver}</strong> com <strong>${predictions.topDriverReports}</strong> reports. Recomenda-se reconhecimento.</p>
+              </div>
+            </div>
+            
+            <div class="insight-card warning">
+              <div class="insight-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M16 12l-4-4-4 4"/>
+                  <path d="M12 16V8"/>
+                </svg>
+              </div>
+              <div class="insight-content">
+                <h4>Recomendações</h4>
+                <p>${predictions.recommendations.join(' ')}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-primary" onclick="closePredictiveModal()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+              Entendi
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      window.currentPredictiveModal = modal;
+    }
+
+    function detectAnomalies() {
+      const anomalies = [];
+      
+      // Detectar picos de atividade
+      const dailyActivity = {};
+      allRecords.forEach(record => {
+        const date = record.data;
+        dailyActivity[date] = (dailyActivity[date] || 0) + 1;
+      });
+      
+      const activities = Object.values(dailyActivity);
+      const avgActivity = activities.reduce((sum, val) => sum + val, 0) / activities.length;
+      const threshold = avgActivity * 2;
+      
+      Object.entries(dailyActivity).forEach(([date, activity]) => {
+        if (activity > threshold) {
+          anomalies.push({
+            type: 'high_activity',
+            date: new Date(date).toLocaleDateString('pt-BR'),
+            value: activity,
+            description: `Pico de atividade: ${activity} reports em um dia (média: ${avgActivity.toFixed(1)})`
+          });
+        }
+      });
+      
+      // Detectar condutores com padrões estranhos
+      const driverStats = {};
+      allRecords.forEach(record => {
+        const driver = record.condutor;
+        if (!driverStats[driver]) {
+          driverStats[driver] = { reports: 0, totalKm: 0, pendingRatio: 0 };
+        }
+        
+        driverStats[driver].reports++;
+        if (record.km_final !== null) {
+          driverStats[driver].totalKm += (record.km_final - record.km_inicial);
+        }
+        if (record.status === 'Pendente') {
+          driverStats[driver].pendingRatio++;
+        }
+      });
+      
+      Object.entries(driverStats).forEach(([driver, stats]) => {
+        const pendingPercentage = (stats.pendingRatio / stats.reports) * 100;
+        const avgKmPerReport = stats.totalKm / stats.reports;
+        
+        if (pendingPercentage > 80) {
+          anomalies.push({
+            type: 'high_pending',
+            driver: driver.split(' ')[0],
+            value: pendingPercentage.toFixed(1),
+            description: `${driver.split(' ')[0]} tem ${pendingPercentage.toFixed(1)}% de reports pendentes`
+          });
+        }
+        
+        if (avgKmPerReport > 100) {
+          anomalies.push({
+            type: 'high_km',
+            driver: driver.split(' ')[0],
+            value: avgKmPerReport.toFixed(1),
+            description: `${driver.split(' ')[0]} tem média muito alta: ${avgKmPerReport.toFixed(1)} km/report`
+          });
+        }
+      });
+      
+      // Detectar dias sem atividade
+      const today = new Date();
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        if (!dailyActivity[dateStr]) {
+          last7Days.push(date.toLocaleDateString('pt-BR'));
+        }
+      }
+      
+      if (last7Days.length > 2) {
+        anomalies.push({
+          type: 'no_activity',
+          value: last7Days.length,
+          description: `${last7Days.length} dias sem atividade na última semana`
+        });
+      }
+      
+      showAnomaliesModal(anomalies);
     }
 
     function calculatePredictions() {
