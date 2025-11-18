@@ -2592,6 +2592,7 @@
       setupEventListeners();
       updateWeatherCard();
       setInterval(updateWeatherCard, 60000);
+await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
       // NOVO: Listener de Estado de Autenticação
       auth.onAuthStateChanged(async (user) => {
@@ -2693,10 +2694,17 @@
         
         showToast(`Bem-vindo, ${currentUser.displayName}!`, 'success');
 
-      } catch (error) {
+     } catch (error) {
         console.error("Erro ao carregar dados do usuário:", error);
-        showToast("Erro ao carregar dados", "error");
-        await auth.signOut();
+        // Alteramos a mensagem para ser mais clara
+        showToast("Erro de conexão ao buscar dados. Atualize a página.", "error");
+        
+        // COMENTAMOS ou REMOVEMOS a linha abaixo para o sistema não te deslogar à força
+        // await auth.signOut(); 
+        
+        // Opcional: Se der erro, volta a tela de login visualmente mas mantém a sessão
+        // document.getElementById('login-screen').classList.remove('hidden');
+        // document.getElementById('manager-screen').classList.add('hidden');
       }
     }
 
