@@ -3629,7 +3629,9 @@
     function generateInsights() {
       // (Esta função pode ser implementada no futuro)
     }
-function createCharts() {
+// --- COLE ESTE BLOCO PARA CORRIGIR OS GRÁFICOS ---
+
+    function createCharts() {
       // Esta é a função "gerente" que chama todos os gráficos
       try {
         if (typeof createTrendChart === 'function') createTrendChart();
@@ -3653,23 +3655,22 @@ function createCharts() {
 
       // 1. Filtrar dados APENAS do Mês Atual
       const now = new Date();
-      const currentMonth = now.getMonth(); // 0 a 11
+      const currentMonth = now.getMonth(); 
       const currentYear = now.getFullYear();
 
       let sentCount = 0;
       let pendingCount = 0;
 
       allRecords.forEach(record => {
-        // Converte a data do registro
         let recDate = new Date();
+        // Correção segura para datas
         if (record.data && typeof record.data === 'string') {
-            const parts = record.data.split('-'); // YYYY-MM-DD
+            const parts = record.data.split('-');
             if(parts.length === 3) {
                 recDate = new Date(parts[0], parts[1] - 1, parts[2]);
             }
         }
 
-        // Se for do mês e ano atuais, conta
         if (recDate.getMonth() === currentMonth && recDate.getFullYear() === currentYear) {
           if (record.status === 'Enviado') {
             sentCount++;
@@ -3679,12 +3680,7 @@ function createCharts() {
         }
       });
 
-      // Se não houver dados no mês, evitar gráfico vazio feio
-      if (sentCount === 0 && pendingCount === 0) {
-         // Opcional: desenhar algo vazio ou deixar zerado
-      }
-
-      // 2. Configuração do Gráfico de Rosca (Doughnut)
+      // 2. Configuração do Gráfico de Rosca (Pizza)
       const config = {
         type: 'doughnut',
         data: {
@@ -3693,10 +3689,7 @@ function createCharts() {
             {
               label: 'Total',
               data: [sentCount, pendingCount],
-              backgroundColor: [
-                '#10b981', // Verde (Enviado)
-                '#f59e0b'  // Laranja (Pendente)
-              ],
+              backgroundColor: ['#10b981', '#f59e0b'],
               hoverOffset: 4,
               borderWidth: 0
             }
@@ -3708,17 +3701,12 @@ function createCharts() {
           plugins: {
             legend: {
               position: 'top',
-              labels: {
-                  usePointStyle: true,
-                  padding: 15,
-                  font: { size: 11 }
-              }
+              labels: { usePointStyle: true, padding: 15 }
             },
             title: {
               display: true,
               text: 'Balanço de ' + now.toLocaleString('pt-BR', { month: 'long' }),
-              font: { size: 14, weight: 'bold' },
-              color: '#1e293b',
+              font: { size: 14 },
               padding: { bottom: 10 }
             },
             tooltip: {
@@ -3733,11 +3721,10 @@ function createCharts() {
                 }
             }
           },
-          cutout: '65%', // Tamanho do buraco da rosca
+          cutout: '65%', 
         },
       };
 
-      // 3. Renderizar
       chartsInstances['reports-trend-chart'] = new Chart(ctx, config);
     }
 
@@ -4618,20 +4605,19 @@ function createCharts() {
     //  MÓDULO DE INTELIGÊNCIA E ANÁLISE AVANÇADA (ATIVADO)
     // =================================================================
 
-    // 1. Lógica e Exibição da Análise Preditiva
+   // --- COLE ESTE BLOCO NO FINAL DO SCRIPT (SUBSTITUINDO AS FUNÇÕES VAZIAS) ---
+
     function showPredictiveAnalysis() {
-      if (allRecords.length < 5) {
-        showToast('São necessários pelo menos 5 registros para gerar previsões.', 'error');
+      if (allRecords.length < 3) { // Reduzi para 3 para facilitar testes
+        showToast('Insira mais alguns registros para gerar previsões.', 'error');
         return;
       }
 
       const predictions = calculatePredictions();
       
-      // Cria o modal dinamicamente
       const modal = document.createElement('div');
       modal.className = 'modal-overlay';
       
-      // Define ícone e cor da tendência
       const trendIcon = predictions.efficiencyTrend >= 0 ? 
         '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>' : 
         '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M23 18l-9.5-9.5-5 5L1 6"/><path d="M17 18h6v-6"/></svg>';
@@ -4643,7 +4629,7 @@ function createCharts() {
         <div class="modal" style="max-width: 700px;">
           <div class="modal-header">
             <h3 class="modal-title">🔮 Análise Preditiva (Próximos 30 Dias)</h3>
-            <p class="modal-subtitle">Estimativas baseadas no histórico de uso recente</p>
+            <p class="modal-subtitle">Estimativas baseadas no histórico de uso</p>
           </div>
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
@@ -4656,7 +4642,6 @@ function createCharts() {
             <div class="dashboard-card" style="flex-direction: column; align-items: flex-start; padding: 1rem;">
                <div style="font-size: 0.85rem; color: #64748b;">Previsão de KM</div>
                <div style="font-size: 1.8rem; font-weight: bold; color: #3b82f6;">~${predictions.nextMonthKM.toLocaleString('pt-BR')} km</div>
-               <div style="font-size: 0.75rem; color: #3b82f6;">Média projetada</div>
             </div>
           </div>
 
@@ -4665,7 +4650,7 @@ function createCharts() {
              <div>
                 <h4 style="margin: 0; color: #1e293b;">Tendência de Eficiência: ${trendText}</h4>
                 <p style="margin: 5px 0 0; font-size: 0.9rem; color: #64748b;">
-                  A taxa de conclusão variou <strong>${predictions.efficiencyTrend.toFixed(1)}%</strong> nos últimos 15 dias.
+                  Variação de <strong>${predictions.efficiencyTrend.toFixed(1)}%</strong> recentemente.
                 </p>
              </div>
           </div>
@@ -4683,39 +4668,34 @@ function createCharts() {
           </div>
         </div>
       `;
-      
       document.body.appendChild(modal);
       window.currentPredictiveModal = modal;
     }
 
     function calculatePredictions() {
-      // Filtra últimos 30 dias
       const now = new Date();
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(now.getDate() - 30);
       
       const recentRecords = allRecords.filter(r => {
-        let d = r.data;
-        if (typeof d === 'string') d = new Date(d.split('-').join('/')); // Fix simples para data
+        if(!r.data) return false;
+        const parts = r.data.split('-');
+        const d = new Date(parts[0], parts[1]-1, parts[2]);
         return d >= thirtyDaysAgo;
       });
 
-      // Se não tiver dados recentes suficientes, usa todos
       const dataset = recentRecords.length > 0 ? recentRecords : allRecords;
-      const periodDays = recentRecords.length > 0 ? 30 : 1; // Evitar divisão por zero
+      const periodDays = recentRecords.length > 0 ? 30 : 1;
 
-      // 1. Média de Reports por dia
       const dailyAvg = dataset.length / periodDays;
       const nextMonthReports = Math.ceil(dailyAvg * 30);
 
-      // 2. Média de KM
       const totalKm = dataset.reduce((sum, r) => {
          if (r.km_final && r.km_final > r.km_inicial) return sum + (r.km_final - r.km_inicial);
          return sum;
       }, 0);
-      const nextMonthKM = Math.ceil((totalKm / dataset.length) * nextMonthReports) || 0;
+      const nextMonthKM = Math.ceil((totalKm / (dataset.length || 1)) * nextMonthReports) || 0;
 
-      // 3. Tendência de Eficiência (Comparar primeira metade vs segunda metade do dataset)
       const half = Math.floor(dataset.length / 2);
       const firstHalf = dataset.slice(0, half);
       const secondHalf = dataset.slice(half);
@@ -4730,70 +4710,38 @@ function createCharts() {
       const newEff = getEfficiency(secondHalf);
       const efficiencyTrend = newEff - oldEff;
 
-      // 4. Gerar Recomendação
       let recommendation = "O fluxo está estável. Continue monitorando.";
-      if (efficiencyTrend < -10) recommendation = "Atenção: A taxa de envios caiu drasticamente. Verifique se há gargalos na equipe.";
-      else if (efficiencyTrend > 10) recommendation = "Ótimo trabalho! A eficiência operacional está aumentando.";
-      else if (nextMonthKM > 5000) recommendation = "Previsão de alta quilometragem. Verifique a necessidade de manutenção preventiva na frota.";
-
+      if (efficiencyTrend < -10) recommendation = "A taxa de envios caiu. Verifique pendências.";
+      else if (efficiencyTrend > 10) recommendation = "A eficiência operacional está aumentando.";
+      
       return { nextMonthReports, nextMonthKM, dailyAvg, efficiencyTrend, recommendation };
     }
 
-    // 2. Lógica de Detecção de Anomalias
     function detectAnomalies() {
       const anomalies = [];
-
-      // Regra 1: Reports com KM muito alto (> 500km em uma rota urbana é suspeito)
+      // 1. KM Alto
       allRecords.forEach(r => {
         if (r.km_final && (r.km_final - r.km_inicial) > 400) {
           anomalies.push({
-            type: 'high_km',
-            title: 'Distância Anormal',
-            desc: `O veículo ${r.placa} percorreu ${(r.km_final - r.km_inicial).toFixed(1)}km em uma única rota para "${r.destino}".`,
-            severity: 'danger'
+            type: 'high_km', title: 'Distância Alta', severity: 'danger',
+            desc: `${r.placa} rodou ${(r.km_final - r.km_inicial).toFixed(0)}km em uma rota.`
           });
         }
       });
-
-      // Regra 2: Veículos que não rodam há muito tempo (Inatividade)
+      // 2. Inatividade
       const lastSeen = {};
       allRecords.forEach(r => {
-        if (!lastSeen[r.placa] || r.data > lastSeen[r.placa]) {
-          lastSeen[r.placa] = r.data;
-        }
+          if (!lastSeen[r.placa] || r.data > lastSeen[r.placa]) lastSeen[r.placa] = r.data;
       });
-      
       const today = new Date();
       Object.keys(lastSeen).forEach(placa => {
-        const lastDate = new Date(lastSeen[placa].split('-').join('/'));
-        const diffTime = Math.abs(today - lastDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        
+        const parts = lastSeen[placa].split('-');
+        const lastDate = new Date(parts[0], parts[1]-1, parts[2]);
+        const diffDays = Math.ceil(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24));
         if (diffDays > 15) {
            anomalies.push({
-            type: 'inactivity',
-            title: 'Veículo Parado',
-            desc: `O veículo ${placa} não registra atividades há ${diffDays} dias.`,
-            severity: 'warning'
-          });
-        }
-      });
-
-      // Regra 3: Muitos reports pendentes para um mesmo condutor
-      const driverPending = {};
-      allRecords.forEach(r => {
-        if(r.status === 'Pendente') {
-          driverPending[r.condutor] = (driverPending[r.condutor] || 0) + 1;
-        }
-      });
-      
-      Object.keys(driverPending).forEach(driver => {
-        if (driverPending[driver] >= 3) {
-           anomalies.push({
-            type: 'backlog',
-            title: 'Acúmulo de Pendências',
-            desc: `O condutor ${driver} possui ${driverPending[driver]} reports não finalizados.`,
-            severity: 'warning'
+            type: 'inactivity', title: 'Veículo Parado', severity: 'warning',
+            desc: `${placa} sem atividade há ${diffDays} dias.`
           });
         }
       });
@@ -4804,73 +4752,37 @@ function createCharts() {
     function showAnomaliesModal(anomalies) {
       const modal = document.createElement('div');
       modal.className = 'modal-overlay';
-      
-      let contentHtml = '';
-      
-      if (anomalies.length === 0) {
-        contentHtml = `
-          <div class="empty-state" style="padding: 2rem;">
-            <div style="font-size: 3rem;">✅</div>
-            <h3 style="color: #10b981; margin: 10px 0;">Tudo Certo!</h3>
-            <p>O sistema não detectou nenhuma anomalia nos registros atuais.</p>
-          </div>
-        `;
-      } else {
-        contentHtml = `<div style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;">
-          ${anomalies.map(a => `
-            <div class="insight-card ${a.severity}" style="padding: 1rem;">
-              <div class="insight-icon">${a.severity === 'danger' ? '🚨' : '⚠️'}</div>
-              <div class="insight-content">
-                <h4 style="font-size: 1rem;">${a.title}</h4>
-                <p style="font-size: 0.9rem;">${a.desc}</p>
-              </div>
-            </div>
-          `).join('')}
-        </div>`;
-      }
+      let content = anomalies.length === 0 ? 
+        '<div class="empty-state" style="padding:2rem;text-align:center;"><h3>✅ Tudo Certo!</h3><p>Nenhuma anomalia detectada.</p></div>' : 
+        `<div style="display:flex;flex-direction:column;gap:10px;">${anomalies.map(a => 
+          `<div class="insight-card ${a.severity}" style="padding:1rem;"><h4>${a.title}</h4><p>${a.desc}</p></div>`
+        ).join('')}</div>`;
 
       modal.innerHTML = `
         <div class="modal" style="max-width: 600px;">
-          <div class="modal-header">
-            <h3 class="modal-title">⚠️ Detecção de Anomalias</h3>
-            <p class="modal-subtitle">O sistema varreu a base de dados em busca de padrões irregulares</p>
-          </div>
-          ${contentHtml}
-          <div class="button-group" style="margin-top: 1.5rem;">
-            <button class="btn btn-primary" onclick="closeAnomaliesModal()" style="width: 100%;">Entendi</button>
-          </div>
-        </div>
-      `;
-      
+          <div class="modal-header"><h3 class="modal-title">⚠️ Anomalias</h3></div>
+          ${content}
+          <div class="button-group" style="margin-top:1.5rem;"><button class="btn btn-primary" onclick="closeAnomaliesModal()" style="width:100%;">Fechar</button></div>
+        </div>`;
       document.body.appendChild(modal);
       window.currentAnomaliesModal = modal;
     }
 
-    function getAnomalyTitle(type) {
-      // Função auxiliar caso precise usar os tipos
-      const titles = {
-        'high_km': 'Quilometragem Excessiva',
-        'inactivity': 'Inatividade de Veículo',
-        'backlog': 'Pendências Acumuladas'
-      };
-      return titles[type] || 'Anomalia Detectada';
-    }
-
-    function closePredictiveModal() {
-      if (window.currentPredictiveModal) {
-        window.currentPredictiveModal.remove();
-        window.currentPredictiveModal = null;
-      }
-    }
-
-    function closeAnomaliesModal() {
-      if (window.currentAnomaliesModal) {
-        window.currentAnomaliesModal.remove();
-        window.currentAnomaliesModal = null;
-      }
-    }
+    function getAnomalyTitle(type) { return type; } // Placeholder simples
     
-    // Funções globais para os modais (removendo as de backup/stats)
+    function closePredictiveModal() {
+      if (window.currentPredictiveModal) { window.currentPredictiveModal.remove(); window.currentPredictiveModal = null; }
+    }
+    function closeAnomaliesModal() {
+      if (window.currentAnomaliesModal) { window.currentAnomaliesModal.remove(); window.currentAnomaliesModal = null; }
+    }
+
+    // Funções globais para os modais
+    window.closePasswordModal = closePasswordModal;
+    window.exportBackup = exportBackup;
+    window.importBackup = importBackup;
+    window.closeBackupModal = closeBackupModal;
+    window.closeStatsModal = closeStatsModal;
     window.closePredictiveModal = closePredictiveModal;
     window.closeAnomaliesModal = closeAnomaliesModal;
 
