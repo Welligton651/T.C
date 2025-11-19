@@ -1853,6 +1853,103 @@
         font-size: 0.875rem;
       }
     }
+/* --- ESTILOS DO RODAPÉ (FOOTER) --- */
+#app-footer {
+  background-color: #f8fafc; /* Cinza bem claro */
+  border-top: 1px solid #e2e8f0;
+  padding: 1.5rem 1rem;
+  margin-top: auto; /* Empurra para baixo se usar flex column no body */
+  width: 100%;
+  font-size: 0.75rem; /* Texto pequeno */
+  color: #4b5563;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .footer-container {
+    flex-direction: row;
+  }
+  .footer-right {
+    text-align: right;
+  }
+  .footer-left {
+    margin-bottom: 0;
+  }
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dev-photo-container {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #6366f1; /* Cor indigo */
+  flex-shrink: 0;
+}
+
+.dev-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dev-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.dev-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dev-role {
+  color: #4f46e5;
+  font-size: 0.7rem;
+}
+
+.system-name {
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.system-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #6b7280;
+}
+
+@media (min-width: 768px) {
+  .system-meta {
+    justify-content: flex-end;
+  }
+}
+
+/* Ocultar na impressão */
+@media print {
+  #app-footer {
+    display: none !important;
+  }
+}
   </style>
   <style>@view-transition { navigation: auto; }</style>
   </script>
@@ -2499,6 +2596,29 @@
    </div>
   </div>
 
+  <footer id="app-footer">
+    <div class="footer-container">
+      
+      <div class="footer-left" style="display: flex; align-items: center; gap: 10px;">
+        <div class="dev-photo-container">
+          <img id="developer-photo" src="https://i.ibb.co/23ns06cH/me.jpg" alt="Welligton Ferreira" class="dev-photo">
+        </div>
+        <div class="dev-info">
+          <span class="dev-name">Desenvolvido por Welligton Ferreira</span>
+          <span class="dev-role">Full-Stack e Arquiteto de Sistemas</span>
+        </div>
+      </div>
+      
+      <div class="footer-right">
+        <p style="margin: 0; font-weight: bold; color: #374151;">Sistema de Controle de Tráfego - SEMCAS</p>
+        <div class="system-meta">
+          <span>V<span id="system-version">1.0</span> (Estável)</span>
+          <span>|</span>
+          <span>© <span id="current-year">2025</span></span>
+        </div>
+      </div>
+    </div>
+  </footer>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -2589,7 +2709,14 @@
     async function initializeApp() {
       console.log('🚀 Inicializando Sistema de Controle de Tráfego...');
       
-      setupEventListeners();
+      setupEventListeners();// Fecha os parênteses aqui e põe ponto e vírgula
+  
+  // Coloca o código do ano na linha de baixo
+  // Atualiza o ano no rodapé
+  const yearElement = document.getElementById('current-year');
+  if(yearElement) {
+    yearElement.textContent = new Date().getFullYear();
+  }
       updateWeatherCard();
       setInterval(updateWeatherCard, 60000);
 await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
