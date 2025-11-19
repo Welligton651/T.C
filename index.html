@@ -2110,6 +2110,20 @@
       <svg width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
       </svg> Sair </button>
     </div><div class="dashboard-grid">
+<div class="dashboard-card" id="card-registered-drivers" style="cursor: pointer; border-left: 4px solid #6366f1;">
+      <div class="dashboard-icon">
+       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+       </svg>
+      </div>
+      <div class="dashboard-content">
+       <h3 id="total-registered-drivers">0</h3>
+       <p>Condutores Cadastrados <br><span style="font-size: 0.7em; color: #6366f1;">(Clique para detalhes)</span></p>
+      </div>
+     </div>
      <div class="dashboard-card">
       <div class="dashboard-icon">
        <svg width="32" height="32" viewbox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -2596,10 +2610,58 @@
    </div>
   </div>
 
+<div id="drivers-details-modal" class="modal-overlay hidden">
+   <div class="modal" style="max-width: 900px;">
+    <div class="modal-header">
+     <h3 class="modal-title">
+       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#253d70" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+         <circle cx="9" cy="7" r="4"></circle>
+         <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+       </svg>
+       Detalhes dos Condutores
+     </h3>
+     <p class="modal-subtitle">Gerenciamento da base de usuários cadastrados</p>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px;">
+      <button class="btn btn-secondary" id="btn-export-drivers-excel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><rect x="8" y="12" width="8" height="6"/></svg>
+        Excel
+      </button>
+      <button class="btn btn-primary" id="btn-export-drivers-html" style="background-color: #ef4444;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+        Relatório HTML
+      </button>
+    </div>
+
+    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome / Email</th>
+            <th>Lotação Cadastrada</th>
+            <th>Última Placa</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="drivers-list-tbody">
+          </tbody>
+      </table>
+    </div>
+
+    <div class="button-group" style="margin-top: 1.5rem;">
+      <button class="btn" onclick="document.getElementById('drivers-details-modal').classList.add('hidden')" style="background: #64748b; color: white;">
+        Fechar
+      </button>
+    </div>
+   </div>
+  </div>
+
   <footer id="app-footer">
     <div class="footer-container">
-      
-      <div class="footer-left" style="display: flex; align-items: center; gap: 10px;">
+      <div class="footer-left">
         <div class="dev-photo-container">
           <img id="developer-photo" src="https://i.ibb.co/23ns06cH/me.jpg" alt="Welligton Ferreira" class="dev-photo">
         </div>
@@ -2610,7 +2672,7 @@
       </div>
       
       <div class="footer-right">
-        <p style="margin: 0; font-weight: bold; color: #374151;">Sistema de Controle de Tráfego - SEMCAS</p>
+        <span class="system-name">Sistema de Controle de Tráfego - SEMCAS</span>
         <div class="system-meta">
           <span>V<span id="system-version">1.0</span> (Estável)</span>
           <span>|</span>
@@ -2875,8 +2937,22 @@ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       document.getElementById('search-plate').addEventListener('input', applySearchFilters);
       document.getElementById('date-from').addEventListener('change', applySearchFilters);
       document.getElementById('date-to').addEventListener('change', applySearchFilters);
-    }
 
+      // --- CÓDIGO NOVO DOS CONDUTORES (AGORA DENTRO DA FUNÇÃO) ---
+      
+      // Clique no Card de Total de Condutores
+      const driverCard = document.getElementById('card-registered-drivers');
+      if(driverCard) {
+        driverCard.addEventListener('click', showDriversDetails);
+      }
+
+      // Botões de Exportação do Modal de Condutores
+      const btnDriversExcel = document.getElementById('btn-export-drivers-excel');
+      if(btnDriversExcel) btnDriversExcel.addEventListener('click', exportDriversToExcel);
+
+      const btnDriversHtml = document.getElementById('btn-export-drivers-html');
+      if(btnDriversHtml) btnDriversHtml.addEventListener('click', exportDriversToHTML);
+    }
     // --- FUNÇÕES DE AUTENTICAÇÃO ATUALIZADAS ---
 
     async function handleLogin(e) {
@@ -3486,7 +3562,8 @@ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       populateDriverFilter();
       updateBIAnalytics(); 
    updateMaintenanceMonitor(); 
-    }
+fetchDriverStats();    
+}
 
     function updateDashboardStats() {
       const totalReports = allRecords.length;
@@ -5029,6 +5106,216 @@ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     window.closePredictiveModal = closePredictiveModal;
     window.closeAnomaliesModal = closeAnomaliesModal;
 
+// =============================================================
+    //  LÓGICA DO MÓDULO DE CONDUTORES (CARD + EXPORTAÇÃO)
+    // =============================================================
+
+    let cachedUsersList = null;
+
+    // 1. Busca a contagem inicial para o Card
+    async function fetchDriverStats() {
+      try {
+        // Se o campo 'type' não existir em alguns users, remova o .where ou ajuste conforme seu banco
+        const usersSnapshot = await db.collection("users").where("type", "==", "condutor").get();
+        const count = usersSnapshot.size;
+        
+        const cardEl = document.getElementById('total-registered-drivers');
+        if (cardEl) cardEl.textContent = count;
+        
+        cachedUsersList = usersSnapshot.docs.map(doc => doc.data());
+      } catch (error) {
+        console.error("Erro ao buscar condutores:", error);
+      }
+    }
+
+    // 2. Helper: Processa os dados (cruza Usuários com Registros)
+    function getProcessedDriversData() {
+      if (!cachedUsersList) return [];
+
+      const driverPlates = {};
+      const driverActivity = {}; 
+      const lastDate = {};
+
+      // Mapeia a atividade baseada nos registros carregados na memória (allRecords)
+      allRecords.forEach(record => {
+        if (!driverPlates[record.condutor]) {
+          driverPlates[record.condutor] = record.placa; // Pega a mais recente pois allRecords é desc
+        }
+        driverActivity[record.condutor] = true;
+        
+        // Salva a data mais recente
+        if (!lastDate[record.condutor] || record.data > lastDate[record.condutor]) {
+          lastDate[record.condutor] = record.data;
+        }
+      });
+
+      return cachedUsersList.map(user => {
+        const displayName = user.nickname || user.name;
+        // Tenta achar pelo apelido ou pelo nome completo
+        const plate = driverPlates[displayName] || driverPlates[user.name] || '-';
+        const isActive = driverActivity[displayName] || driverActivity[user.name];
+        const lastSeen = lastDate[displayName] || lastDate[user.name] || null;
+
+        return {
+          name: user.name,
+          email: user.email,
+          location: user.location || 'Não informado',
+          plate: plate,
+          active: isActive,
+          lastSeen: lastSeen
+        };
+      });
+    }
+
+    // 3. Exibir Modal e Tabela
+    function showDriversDetails() {
+      if (!cachedUsersList) {
+        showToast("Carregando dados...", "warning");
+        fetchDriverStats().then(showDriversDetails); // Tenta buscar e reabrir
+        return;
+      }
+
+      const tbody = document.getElementById('drivers-list-tbody');
+      const data = getProcessedDriversData();
+
+      tbody.innerHTML = data.map(d => {
+        // Formatação da data se existir
+        let dataTexto = 'Recente';
+        if (d.lastSeen) {
+            const parts = d.lastSeen.split('-');
+            if (parts.length === 3) dataTexto = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        const statusBadge = d.active 
+          ? `<span class="status-badge status-enviado">Ativo (${dataTexto})</span>` 
+          : '<span class="status-badge" style="background:#f3f4f6; color:#6b7280;">Sem registros</span>';
+        
+        const plateStyle = d.plate !== '-' ? 'font-weight:600; color:#253d70;' : 'color:#9ca3af; font-style:italic;';
+
+        return `
+          <tr>
+            <td>
+              <strong>${d.name}</strong>
+              <div style="font-size:0.75rem; color:#64748b;">${d.email}</div>
+            </td>
+            <td>${d.location}</td>
+            <td style="text-align:center; ${plateStyle}">${d.plate}</td>
+            <td>${statusBadge}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('drivers-details-modal').classList.remove('hidden');
+    }
+
+    // 4. Exportar para Excel
+    function exportDriversToExcel() {
+      const data = getProcessedDriversData();
+      if (data.length === 0) { showToast('Sem dados para exportar', 'error'); return; }
+
+      let htmlContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            th { background-color: #253d70; color: white; border: 1px solid #000; padding: 5px; }
+            td { border: 1px solid #ccc; padding: 5px; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <tr><th colspan="5" style="font-size:14px;">RELAÇÃO DE CONDUTORES CADASTRADOS</th></tr>
+            <tr>
+              <th>Nome Completo</th>
+              <th>Email</th>
+              <th>Lotação</th>
+              <th>Última Placa</th>
+              <th>Status</th>
+            </tr>
+            ${data.map(d => `
+              <tr>
+                <td>${d.name}</td>
+                <td>${d.email}</td>
+                <td>${d.location}</td>
+                <td style="text-align:center;">${d.plate}</td>
+                <td style="text-align:center;">${d.active ? 'Ativo' : 'Inativo'}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </body></html>`;
+
+      const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `condutores_cadastrados_${new Date().toISOString().split('T')[0]}.xls`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 5. Exportar para HTML (Relatório Bonito)
+    function exportDriversToHTML() {
+      const data = getProcessedDriversData();
+      if (data.length === 0) { showToast('Sem dados para exportar', 'error'); return; }
+
+      const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 640 640" fill="#253d70"><path d="M541.9 139.5C546.4 127.7 543.6 114.3 534.7 105.4C525.8 96.5 512.4 93.6 500.6 98.2L84.6 258.2C71.9 263 63.7 275.2 64 288.7C64.3 302.2 73.1 314.1 85.9 318.3L262.7 377.2L321.6 554C325.9 566.8 337.7 575.6 351.2 575.9C364.7 576.2 376.9 568 381.8 555.4L541.8 139.4z"/></svg>`;
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório de Condutores</title>
+          <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 40px; max-width: 1000px; margin: 0 auto; background: #f8fafc; color: #333; }
+            .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+            .header { display: flex; align-items: center; gap: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+            .title h1 { margin: 0; color: #1e293b; font-size: 22px; }
+            .title p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
+            table { width: 100%; border-collapse: collapse; }
+            thead { background: #1e293b; color: white; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+            .badge { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+            .ativo { background: #dcfce7; color: #166534; }
+            .inativo { background: #f1f5f9; color: #64748b; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              ${logoSvg}
+              <div class="title">
+                <h1>Relatório de Condutores Cadastrados</h1>
+                <p>SEMCAS - Coordenação de Suporte e Logística</p>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Nome</th><th>Email</th><th>Lotação</th><th>Última Placa</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                ${data.map(d => `
+                  <tr>
+                    <td><b>${d.name}</b></td>
+                    <td>${d.email}</td>
+                    <td>${d.location}</td>
+                    <td style="text-align:center">${d.plate}</td>
+                    <td><span class="badge ${d.active ? 'ativo' : 'inativo'}">${d.active ? 'Ativo' : 'Sem registro'}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </body></html>`;
+
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `relatorio_condutores_${new Date().toISOString().split('T')[0]}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
     // Inicialização do sistema
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
