@@ -2780,6 +2780,7 @@
       dateEl.textContent = now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
+let deferredPrompt;
     async function initializeApp() {
       console.log('🚀 Inicializando Sistema de Controle de Tráfego...');
 
@@ -2789,7 +2790,34 @@
       .then(() => console.log('PWA Service Worker registrado!'))
       .catch(err => console.error('Erro PWA:', err));
 }
-  
+  window.addEventListener('beforeinstallprompt', (e) => {
+        // Impede que o Chrome mostre a barra automática feia
+        e.preventDefault();
+        // Guarda o evento para usar quando o usuário clicar no botão
+        deferredPrompt = e;
+        console.log('Capturou evento de instalação PWA!');
+        
+        // TORNA O BOTÃO VISÍVEL
+        const installContainer = document.getElementById('install-container');
+        if (installContainer) {
+            installContainer.style.display = 'block';
+        }
+      });
+
+      // Configura o clique do botão
+      const btnInstall = document.getElementById('btn-install-pwa');
+      if (btnInstall) {
+        btnInstall.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt(); // Mostra a pergunta do navegador
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`Resultado da instalação: ${outcome}`);
+            deferredPrompt = null;
+            // Esconde o botão depois de instalar
+            document.getElementById('install-container').style.display = 'none';
+          }
+        });
+      }
       
       setupEventListeners();// Fecha os parênteses aqui e põe ponto e vírgula
   
