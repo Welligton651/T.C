@@ -3,7 +3,7 @@
   "short_name": "SEMCAS",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#253d70",
+  "background_color": "#1F3A66",
   "theme_color": "#253d70",
   "orientation": "portrait",
   "scope": "./",
