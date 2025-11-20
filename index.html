@@ -5168,15 +5168,22 @@ fetchDriverStats();
     }
 
     // 3. Exibir Modal e Tabela
-    function showDriversDetails() {
+    async function showDriversDetails() {
+      // Se não tiver dados em cache, tenta buscar uma única vez
       if (!cachedUsersList) {
-        showToast("Carregando dados...", "warning");
-        fetchDriverStats().then(showDriversDetails); // Tenta buscar e reabrir
-        return;
+        showToast("Carregando lista de condutores...", "warning");
+        await fetchDriverStats();
+        
+        // Se mesmo após tentar buscar, continuar vazio (por erro), para a execução
+        if (!cachedUsersList) {
+            showToast("Não foi possível carregar os condutores. Verifique as permissões.", "error");
+            return;
+        }
       }
 
       const tbody = document.getElementById('drivers-list-tbody');
       const data = getProcessedDriversData();
+      
 
       tbody.innerHTML = data.map(d => {
         // Formatação da data se existir
