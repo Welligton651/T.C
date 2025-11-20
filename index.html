@@ -1953,10 +1953,58 @@
     display: none !important;
   }
 }
+/* --- SPLASH SCREEN (APENAS NO MODO APP) --- */
+#app-splash { display: none; }
+
+@media all and (display-mode: standalone) {
+  #app-splash {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, #253d70 0%, #1e2a54 100%);
+    z-index: 9999;
+    display: flex;
+    align-items: center; justify-content: center;
+    transition: opacity 0.5s ease-out, visibility 0.5s;
+  }
+}
+
+#app-splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.splash-content {
+  text-align: center; display: flex; flex-direction: column; align-items: center;
+}
+
+@keyframes custom-fade {
+  0% { opacity: 0.6; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.6; transform: scale(0.95); }
+}
+
+.splash-loader {
+  width: 30px; height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-top: 2rem;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
   </style>
   <style>@view-transition { navigation: auto; }</style>
  </head>
  <body>
+<div id="app-splash">
+    <div class="splash-content">
+      <i class="fa-solid fa-location-arrow" 
+         style="font-size: 80px; color: #ffffff; animation: custom-fade 1.5s infinite ease-in-out;">
+      </i>
+      
+      <h2 style="color: #ffffff; font-weight: 800; margin-top: 20px; letter-spacing: 1px;">SEMCAS</h2>
+      
+      <div class="splash-loader"></div>
+    </div>
+  </div>
   <div id="responsible-modal" class="modal-overlay hidden">
    <div class="modal">
     
@@ -5371,9 +5419,27 @@ fetchDriverStats();
       link.click();
       document.body.removeChild(link);
     }
-    // Inicialização do sistema
+    // Inicialização do sistema com Splash Screen
     document.addEventListener('DOMContentLoaded', function() {
+      
+      // 1. Inicia a lógica do App normalmente
       initializeApp();
+
+      // 2. Controla a tela de abertura (Splash Screen)
+      // O CSS já esconde ela se for navegador comum.
+      // Se for App Instalado, ela aparece, e nós removemos após 2.5 segundos.
+      setTimeout(() => {
+        const splash = document.getElementById('app-splash');
+        if(splash) {
+          // Adiciona a classe que faz sumir (fade-out)
+          splash.classList.add('hidden');
+          
+          // Remove o elemento do HTML logo depois para liberar memória
+          setTimeout(() => { 
+            splash.remove(); 
+          }, 500);
+        }
+      }, 2500); // 2500ms = 2.5 segundos de animação
     });
 
   </script>
