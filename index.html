@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema de Controle de Tráfego</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#253d70">
+<link rel="apple-touch-icon" href="./icon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -1952,7 +1955,6 @@
 }
   </style>
   <style>@view-transition { navigation: auto; }</style>
-  </script>
  </head>
  <body>
   <div id="responsible-modal" class="modal-overlay hidden">
@@ -2770,6 +2772,14 @@
 
     async function initializeApp() {
       console.log('🚀 Inicializando Sistema de Controle de Tráfego...');
+
+// --- CÓDIGO PWA PARA GITHUB PAGES ---
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('PWA Service Worker registrado!'))
+      .catch(err => console.error('Erro PWA:', err));
+}
+  
       
       setupEventListeners();// Fecha os parênteses aqui e põe ponto e vírgula
   
