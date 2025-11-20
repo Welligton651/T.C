@@ -1,0 +1,17 @@
+{
+  "name": "Controle de Tráfego SEMCAS",
+  "short_name": "SEMCAS",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#253d70",
+  "theme_color": "#253d70",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
