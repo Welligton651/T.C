@@ -2924,14 +2924,15 @@ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         };
         
         // 2. Definir a consulta de registros
-        let recordsQuery = db.collection("records").orderBy("created_at", "desc");
-        
-        // Otimização: Gestores carregam tudo, condutores carregam apenas os seus
-        if (currentUser.type !== 'gestor') {
-          recordsQuery = recordsQuery.where("user_uid", "==", currentUser.uid);
-        }
-        
-        const recordsSnapshot = await recordsQuery.limit(50).get(); // Limitar carga inicial
+let recordsQuery = db.collection("records").orderBy("created_at", "desc");
+
+// Otimização: Gestores carregam tudo, condutores carregam apenas os seus
+if (currentUser.type !== 'gestor') {
+  recordsQuery = recordsQuery.where("user_uid", "==", currentUser.uid);
+}
+
+// CORREÇÃO: Removemos o limite para trazer TUDO
+const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
                                     
         allRecords = recordsSnapshot.docs.map(doc => {
           const data = doc.data();
