@@ -2005,6 +2005,50 @@
       <div class="splash-loader"></div>
     </div>
   </div>
+<!-- Modal de Edição de Registro (Novo) -->
+  <div id="edit-record-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Editar Informações</h3>
+        <p class="modal-subtitle">Corrija os dados do registro enviado</p>
+      </div>
+      <input type="hidden" id="edit-record-id">
+      
+      <div class="form-grid" style="grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group">
+          <label for="edit-placa">Placa</label>
+          <input type="text" id="edit-placa" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-data">Data</label>
+          <input type="date" id="edit-data" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-destino">Destino</label>
+          <input type="text" id="edit-destino" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-km-inicial">KM Inicial</label>
+          <input type="number" id="edit-km-inicial" required min="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label for="edit-justificativa" style="color: #dc2626;">Justificativa da Edição *</label>
+          <textarea id="edit-justificativa" required placeholder="Por favor, explique o motivo da alteração..."></textarea>
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <button class="btn btn-secondary" onclick="saveRecordEdit()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Salvar Edição
+        </button>
+        <button class="btn btn-danger" onclick="closeEditModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
   <div id="responsible-modal" class="modal-overlay hidden">
    <div class="modal">
     
@@ -2623,9 +2667,7 @@
        <div class="form-group"><label for="km-inicial">KM Inicial</label> <input type="number" id="km-inicial" required min="0" step="0.1"> <small>O KM Final será preenchido automaticamente pelo próximo registro</small>
        </div>
       </div>
-      <div class="button-group"><button type="button" class="btn btn-primary" id="btn-send-direct">
-        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-        </svg><span id="text-send-direct">Enviar Direto (Desativado)</span> </button> <button type="button" class="btn btn-secondary" id="btn-add-queue">
+      <div class="button-group"> <button type="button" class="btn btn-secondary" id="btn-add-queue">
         <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" />
         </svg><span id="text-add-queue">Adicionar ao Resumo</span> </button>
       </div>
@@ -2656,7 +2698,9 @@
         <th>Distância</th>
         <th>Status</th>
         <th>Responsável</th>
+        <th>Ações</th>
        </tr>
+      </thead>
       </thead>
       <tbody id="records-tbody">
        <tr>
@@ -3052,6 +3096,72 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
     }
     // --- FUNÇÕES DE AUTENTICAÇÃO ATUALIZADAS ---
 
+// --- LÓGICA DE EDIÇÃO DO REGISTRO ---
+    function openEditModal(id) {
+      const record = allRecords.find(r => r.id === id);
+      if(!record) return;
+
+      document.getElementById('edit-record-id').value = id;
+      document.getElementById('edit-placa').value = record.placa;
+      document.getElementById('edit-data').value = record.data;
+      document.getElementById('edit-destino').value = record.destino;
+      document.getElementById('edit-km-inicial').value = record.km_inicial;
+      document.getElementById('edit-justificativa').value = ''; 
+
+      document.getElementById('edit-record-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-record-modal').classList.add('hidden');
+    }
+
+    async function saveRecordEdit() {
+      const id = document.getElementById('edit-record-id').value;
+      const placa = document.getElementById('edit-placa').value.trim().toUpperCase();
+      const data = document.getElementById('edit-data').value;
+      const destino = document.getElementById('edit-destino').value.trim();
+      const km_inicial = parseFloat(document.getElementById('edit-km-inicial').value);
+      const justificativa = document.getElementById('edit-justificativa').value.trim();
+
+      if(!placa || !data || !destino || isNaN(km_inicial)) {
+        showToast('Preencha todos os campos do registro.', 'error');
+        return;
+      }
+      if(!justificativa) {
+        showToast('A justificativa da edição é obrigatória.', 'error');
+        return;
+      }
+
+      try {
+        const dataTimestamp = firebase.firestore.Timestamp.fromDate(new Date(data + 'T12:00:00'));
+
+        await db.collection("records").doc(id).update({
+          placa: placa,
+          data: dataTimestamp,
+          destino: destino,
+          km_inicial: km_inicial,
+          justificativa_edicao: justificativa,
+          data_edicao: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        const index = allRecords.findIndex(r => r.id === id);
+        if(index > -1) {
+          allRecords[index].placa = placa;
+          allRecords[index].data = data;
+          allRecords[index].destino = destino;
+          allRecords[index].km_inicial = km_inicial;
+          allRecords[index].justificativa_edicao = justificativa;
+        }
+
+        renderTable();
+        closeEditModal();
+        showToast('Registro editado com sucesso!', 'success');
+
+      } catch (error) {
+        console.error("Erro ao editar registro:", error);
+        showToast('Erro ao salvar a edição. Tente novamente.', 'error');
+      }
+    }
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('username').value.trim(); 
@@ -3424,15 +3534,18 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
         }
         
         const responsavel = record.responsavel_unidade || '-';
+
+        // LÓGICA DO BOTÃO DE EDITAR
+        const editButton = !isDisabled 
+            ? `<button class="btn" onclick="openEditModal('${record.id}')" style="min-width: auto; padding: 0.4em 0.8em; font-size: 0.8em; background-color: #f59e0b; color: white;" title="Editar Registro">
+                 <i class="fa-solid fa-pen"></i>
+               </button>`
+            : `<button class="btn" disabled style="min-width: auto; padding: 0.4em 0.8em; font-size: 0.8em; background-color: #e5e7eb; color: #9ca3af;"><i class="fa-solid fa-pen"></i></button>`;
         
         return `
           <tr>
             <td class="checkbox-cell">
-              <input type="checkbox" 
-                     class="record-checkbox" 
-                     data-id="${record.id}"
-                     ${isDisabled ? 'disabled' : ''}
-                     onchange="updateSendButton()">
+              <input type="checkbox" class="record-checkbox" data-id="${record.id}" ${isDisabled ? 'disabled' : ''} onchange="updateSendButton()">
             </td>
             <td>${record.condutor}</td>
             <td>${record.placa}</td>
@@ -3443,7 +3556,13 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
             <td><strong>${distancia}</strong></td>
             <td><span class="status-badge ${statusClass}">${record.status}</span></td>
             <td><small>${responsavel}</small></td>
+            <td style="text-align:center;">${editButton}</td>
           </tr>
+        `;
+      }).join('');
+
+      updateSendButton();
+    }
         `;
       }).join('');
 
