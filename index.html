@@ -2005,6 +2005,52 @@
       <div class="splash-loader"></div>
     </div>
   </div>
+
+  <!-- Modal de Edição de Registro (Novo) -->
+  <div id="edit-record-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Editar Informações</h3>
+        <p class="modal-subtitle">Corrija os dados do registro enviado</p>
+      </div>
+      <input type="hidden" id="edit-record-id">
+      
+      <div class="form-grid" style="grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group">
+          <label for="edit-placa">Placa</label>
+          <input type="text" id="edit-placa" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-data">Data</label>
+          <input type="date" id="edit-data" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-destino">Destino</label>
+          <input type="text" id="edit-destino" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-km-inicial">KM Inicial</label>
+          <input type="number" id="edit-km-inicial" required min="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label for="edit-justificativa" style="color: #dc2626;">Justificativa da Edição *</label>
+          <textarea id="edit-justificativa" required placeholder="Por favor, explique o motivo da alteração dos dados originais..."></textarea>
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <button class="btn btn-secondary" onclick="saveRecordEdit()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Salvar Edição
+        </button>
+        <button class="btn btn-danger" onclick="closeEditModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="responsible-modal" class="modal-overlay hidden">
    <div class="modal">
     
@@ -2623,9 +2669,8 @@
        <div class="form-group"><label for="km-inicial">KM Inicial</label> <input type="number" id="km-inicial" required min="0" step="0.1"> <small>O KM Final será preenchido automaticamente pelo próximo registro</small>
        </div>
       </div>
-      <div class="button-group"><button type="button" class="btn btn-primary" id="btn-send-direct">
-        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-        </svg><span id="text-send-direct">Enviar Direto (Desativado)</span> </button> <button type="button" class="btn btn-secondary" id="btn-add-queue">
+      <div class="button-group">
+        <button type="button" class="btn btn-secondary" id="btn-add-queue" style="width: 100%;">
         <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" />
         </svg><span id="text-add-queue">Adicionar ao Resumo</span> </button>
       </div>
@@ -2635,7 +2680,8 @@
    <div class="card">
     <div class="table-header">
      <h2 id="table-title">Resumo de Reports</h2>
-     <div class="table-actions"><button class="btn btn-primary" id="btn-send-selected" disabled>
+     <div class="table-actions">
+       <button class="btn btn-primary" id="btn-send-selected" disabled>
        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
        </svg><span id="text-send-selected">Enviar Selecionados</span> </button> <button class="btn btn-danger" id="btn-clear-all">
        <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -2656,11 +2702,12 @@
         <th>Distância</th>
         <th>Status</th>
         <th>Responsável</th>
+        <th>Ações</th> <!-- NOVA COLUNA AQUI -->
        </tr>
       </thead>
       <tbody id="records-tbody">
        <tr>
-        <td colspan="10" class="empty-state">
+        <td colspan="11" class="empty-state">
          <svg viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
          </svg><p>Nenhum registro na fila</p></td>
        </tr>
@@ -3001,7 +3048,6 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
       document.getElementById('logout-btn').addEventListener('click', handleLogout);
       document.getElementById('manager-logout-btn').addEventListener('click', handleLogout);
 
-      document.getElementById('btn-send-direct').addEventListener('click', handleSendDirect);
       document.getElementById('btn-add-queue').addEventListener('click', handleAddToQueue);
       document.getElementById('btn-send-selected').addEventListener('click', handleSendSelected);
       document.getElementById('btn-clear-all').addEventListener('click', handleClearAll);
@@ -3050,6 +3096,79 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
       const btnDriversHtml = document.getElementById('btn-export-drivers-html');
       if(btnDriversHtml) btnDriversHtml.addEventListener('click', exportDriversToHTML);
     }
+
+    // --- LÓGICA DE EDIÇÃO DO REGISTRO (NOVO) ---
+    function openEditModal(id) {
+      const record = allRecords.find(r => r.id === id);
+      if(!record) return;
+
+      // Preenche os campos do modal com os dados originais
+      document.getElementById('edit-record-id').value = id;
+      document.getElementById('edit-placa').value = record.placa;
+      document.getElementById('edit-data').value = record.data;
+      document.getElementById('edit-destino').value = record.destino;
+      document.getElementById('edit-km-inicial').value = record.km_inicial;
+      document.getElementById('edit-justificativa').value = ''; // Limpa a justificativa anterior
+
+      document.getElementById('edit-record-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-record-modal').classList.add('hidden');
+    }
+
+    async function saveRecordEdit() {
+      const id = document.getElementById('edit-record-id').value;
+      const placa = document.getElementById('edit-placa').value.trim().toUpperCase();
+      const data = document.getElementById('edit-data').value;
+      const destino = document.getElementById('edit-destino').value.trim();
+      const km_inicial = parseFloat(document.getElementById('edit-km-inicial').value);
+      const justificativa = document.getElementById('edit-justificativa').value.trim();
+
+      if(!placa || !data || !destino || isNaN(km_inicial)) {
+        showToast('Preencha todos os campos do registro.', 'error');
+        return;
+      }
+      if(!justificativa) {
+        showToast('A justificativa da edição é obrigatória.', 'error');
+        return;
+      }
+
+      try {
+        // Truque para o Date manter o dia correto devido ao timezone (Adiciona 12:00hrs)
+        const dataTimestamp = firebase.firestore.Timestamp.fromDate(new Date(data + 'T12:00:00'));
+
+        // Atualiza no Firestore
+        await db.collection("records").doc(id).update({
+          placa: placa,
+          data: dataTimestamp,
+          destino: destino,
+          km_inicial: km_inicial,
+          justificativa_edicao: justificativa,
+          data_edicao: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Atualiza na memória local
+        const index = allRecords.findIndex(r => r.id === id);
+        if(index > -1) {
+          allRecords[index].placa = placa;
+          allRecords[index].data = data;
+          allRecords[index].destino = destino;
+          allRecords[index].km_inicial = km_inicial;
+          allRecords[index].justificativa_edicao = justificativa;
+        }
+
+        renderTable();
+        closeEditModal();
+        showToast('Registro editado com sucesso!', 'success');
+
+      } catch (error) {
+        console.error("Erro ao editar registro:", error);
+        showToast('Erro ao salvar a edição. Tente novamente.', 'error');
+      }
+    }
+
+
     // --- FUNÇÕES DE AUTENTICAÇÃO ATUALIZADAS ---
 
     async function handleLogin(e) {
@@ -3243,39 +3362,6 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
       document.getElementById('destino').focus();
     }
 
-    async function handleSendDirect() {
-      if (isProcessing) return;
-
-      let formData = getFormData();
-      if (!formData) return;
-
-      isProcessing = true;
-      const btn = document.getElementById('btn-send-direct');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<div class="spinner"></div> Enviando...';
-      btn.disabled = true;
-
-      formData.status = 'Enviado'; 
-      
-      const newRecord = await addRecordToFirestore(formData);
-      
-      if (newRecord) {
-        renderTable();
-        updateSelectAllCheckbox();
-        if (currentUser && currentUser.type === 'gestor') {
-          updateManagerDashboard();
-        }
-        showToast('Registro enviado com sucesso!', 'success');
-        clearForm();
-      } else {
-        showToast('Erro ao enviar registro', 'error');
-      }
-
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      isProcessing = false;
-    }
-
     async function handleAddToQueue() {
       if (isProcessing) return;
 
@@ -3391,6 +3477,7 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
       updateSelectAllCheckbox();
     }
 
+    // --- RENDERIZAR TABELA COM BOTÃO DE EDIÇÃO ---
     function renderTable() {
       const tbody = document.getElementById('records-tbody');
       const userRecords = allRecords.filter(record => record.user_uid === currentUser.uid);
@@ -3398,7 +3485,7 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
       if (userRecords.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="10" class="empty-state">
+            <td colspan="11" class="empty-state">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
               </svg>
@@ -3424,6 +3511,13 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
         }
         
         const responsavel = record.responsavel_unidade || '-';
+
+        // Lógica do botão de editar
+        const editButton = !isDisabled 
+            ? `<button class="btn" onclick="openEditModal('${record.id}')" style="min-width: auto; padding: 0.4em 0.8em; font-size: 0.8em; background-color: #f59e0b; color: white;" title="Editar Registro">
+                 <i class="fa-solid fa-pen"></i>
+               </button>`
+            : `<button class="btn" disabled style="min-width: auto; padding: 0.4em 0.8em; font-size: 0.8em; background-color: #e5e7eb; color: #9ca3af;"><i class="fa-solid fa-pen"></i></button>`;
         
         return `
           <tr>
@@ -3443,6 +3537,7 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
             <td><strong>${distancia}</strong></td>
             <td><span class="status-badge ${statusClass}">${record.status}</span></td>
             <td><small>${responsavel}</small></td>
+            <td style="text-align:center;">${editButton}</td>
           </tr>
         `;
       }).join('');
@@ -5057,392 +5152,4 @@ fetchDriverStats();
                <div style="font-size: 0.75rem; color: #10b981;">Baseado em ${predictions.dailyAvg.toFixed(1)} reports/dia</div>
             </div>
 
-            <div class="dashboard-card" style="flex-direction: column; align-items: flex-start; padding: 1rem;">
-               <div style="font-size: 0.85rem; color: #64748b;">Previsão de KM</div>
-               <div style="font-size: 1.8rem; font-weight: bold; color: #3b82f6;">~${predictions.nextMonthKM.toLocaleString('pt-BR')} km</div>
-            </div>
-          </div>
-
-          <div style="background: #f8fafc; border-left: 4px solid ${trendColor}; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
-             <div style="background: white; padding: 8px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${trendIcon}</div>
-             <div>
-                <h4 style="margin: 0; color: #1e293b;">Tendência de Eficiência: ${trendText}</h4>
-                <p style="margin: 5px 0 0; font-size: 0.9rem; color: #64748b;">
-                  Variação de <strong>${predictions.efficiencyTrend.toFixed(1)}%</strong> recentemente.
-                </p>
-             </div>
-          </div>
-
-          <div class="insight-card warning">
-             <div class="insight-icon">💡</div>
-             <div class="insight-content">
-               <h4>Sugestão do Sistema</h4>
-               <p>${predictions.recommendation}</p>
-             </div>
-          </div>
-
-          <div class="button-group" style="margin-top: 1.5rem;">
-            <button class="btn btn-primary" onclick="closePredictiveModal()" style="width: 100%;">Fechar Análise</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      window.currentPredictiveModal = modal;
-    }
-
-    function calculatePredictions() {
-      const now = new Date();
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(now.getDate() - 30);
-      
-      const recentRecords = allRecords.filter(r => {
-        if(!r.data) return false;
-        const parts = r.data.split('-');
-        const d = new Date(parts[0], parts[1]-1, parts[2]);
-        return d >= thirtyDaysAgo;
-      });
-
-      const dataset = recentRecords.length > 0 ? recentRecords : allRecords;
-      const periodDays = recentRecords.length > 0 ? 30 : 1;
-
-      const dailyAvg = dataset.length / periodDays;
-      const nextMonthReports = Math.ceil(dailyAvg * 30);
-
-      const totalKm = dataset.reduce((sum, r) => {
-         if (r.km_final && r.km_final > r.km_inicial) return sum + (r.km_final - r.km_inicial);
-         return sum;
-      }, 0);
-      const nextMonthKM = Math.ceil((totalKm / (dataset.length || 1)) * nextMonthReports) || 0;
-
-      const half = Math.floor(dataset.length / 2);
-      const firstHalf = dataset.slice(0, half);
-      const secondHalf = dataset.slice(half);
-
-      const getEfficiency = (arr) => {
-        if (!arr.length) return 0;
-        const sent = arr.filter(r => r.status === 'Enviado').length;
-        return (sent / arr.length) * 100;
-      };
-
-      const oldEff = getEfficiency(firstHalf);
-      const newEff = getEfficiency(secondHalf);
-      const efficiencyTrend = newEff - oldEff;
-
-      let recommendation = "O fluxo está estável. Continue monitorando.";
-      if (efficiencyTrend < -10) recommendation = "A taxa de envios caiu. Verifique pendências.";
-      else if (efficiencyTrend > 10) recommendation = "A eficiência operacional está aumentando.";
-      
-      return { nextMonthReports, nextMonthKM, dailyAvg, efficiencyTrend, recommendation };
-    }
-
-    function detectAnomalies() {
-      const anomalies = [];
-      // 1. KM Alto
-      allRecords.forEach(r => {
-        if (r.km_final && (r.km_final - r.km_inicial) > 400) {
-          anomalies.push({
-            type: 'high_km', title: 'Distância Alta', severity: 'danger',
-            desc: `${r.placa} rodou ${(r.km_final - r.km_inicial).toFixed(0)}km em uma rota.`
-          });
-        }
-      });
-      // 2. Inatividade
-      const lastSeen = {};
-      allRecords.forEach(r => {
-          if (!lastSeen[r.placa] || r.data > lastSeen[r.placa]) lastSeen[r.placa] = r.data;
-      });
-      const today = new Date();
-      Object.keys(lastSeen).forEach(placa => {
-        const parts = lastSeen[placa].split('-');
-        const lastDate = new Date(parts[0], parts[1]-1, parts[2]);
-        const diffDays = Math.ceil(Math.abs(today - lastDate) / (1000 * 60 * 60 * 24));
-        if (diffDays > 15) {
-           anomalies.push({
-            type: 'inactivity', title: 'Veículo Parado', severity: 'warning',
-            desc: `${placa} sem atividade há ${diffDays} dias.`
-          });
-        }
-      });
-
-      showAnomaliesModal(anomalies);
-    }
-
-    function showAnomaliesModal(anomalies) {
-      const modal = document.createElement('div');
-      modal.className = 'modal-overlay';
-      let content = anomalies.length === 0 ? 
-        '<div class="empty-state" style="padding:2rem;text-align:center;"><h3>✅ Tudo Certo!</h3><p>Nenhuma anomalia detectada.</p></div>' : 
-        `<div style="display:flex;flex-direction:column;gap:10px;">${anomalies.map(a => 
-          `<div class="insight-card ${a.severity}" style="padding:1rem;"><h4>${a.title}</h4><p>${a.desc}</p></div>`
-        ).join('')}</div>`;
-
-      modal.innerHTML = `
-        <div class="modal" style="max-width: 600px;">
-          <div class="modal-header"><h3 class="modal-title">⚠️ Anomalias</h3></div>
-          ${content}
-          <div class="button-group" style="margin-top:1.5rem;"><button class="btn btn-primary" onclick="closeAnomaliesModal()" style="width:100%;">Fechar</button></div>
-        </div>`;
-      document.body.appendChild(modal);
-      window.currentAnomaliesModal = modal;
-    }
-
-    function getAnomalyTitle(type) { return type; } // Placeholder simples
-    
-    function closePredictiveModal() {
-      if (window.currentPredictiveModal) { window.currentPredictiveModal.remove(); window.currentPredictiveModal = null; }
-    }
-    function closeAnomaliesModal() {
-      if (window.currentAnomaliesModal) { window.currentAnomaliesModal.remove(); window.currentAnomaliesModal = null; }
-    }
-
-    // Funções globais para os modais
-    window.exportBackup = exportBackup;
-    window.importBackup = importBackup;
-    window.closeBackupModal = closeBackupModal;
-    window.closeStatsModal = closeStatsModal;
-    window.closePredictiveModal = closePredictiveModal;
-    window.closeAnomaliesModal = closeAnomaliesModal;
-
-// =============================================================
-    //  LÓGICA DO MÓDULO DE CONDUTORES (CARD + EXPORTAÇÃO)
-    // =============================================================
-
-    let cachedUsersList = null;
-
-    // 1. Busca a contagem inicial para o Card
-    async function fetchDriverStats() {
-      try {
-        // Se o campo 'type' não existir em alguns users, remova o .where ou ajuste conforme seu banco
-        const usersSnapshot = await db.collection("users").where("type", "==", "condutor").get();
-        const count = usersSnapshot.size;
-        
-        const cardEl = document.getElementById('total-registered-drivers');
-        if (cardEl) cardEl.textContent = count;
-        
-        cachedUsersList = usersSnapshot.docs.map(doc => doc.data());
-      } catch (error) {
-        console.error("Erro ao buscar condutores:", error);
-      }
-    }
-
-    // 2. Helper: Processa os dados (cruza Usuários com Registros)
-    function getProcessedDriversData() {
-      if (!cachedUsersList) return [];
-
-      const driverPlates = {};
-      const driverActivity = {}; 
-      const lastDate = {};
-
-      // Mapeia a atividade baseada nos registros carregados na memória (allRecords)
-      allRecords.forEach(record => {
-        if (!driverPlates[record.condutor]) {
-          driverPlates[record.condutor] = record.placa; // Pega a mais recente pois allRecords é desc
-        }
-        driverActivity[record.condutor] = true;
-        
-        // Salva a data mais recente
-        if (!lastDate[record.condutor] || record.data > lastDate[record.condutor]) {
-          lastDate[record.condutor] = record.data;
-        }
-      });
-
-      return cachedUsersList.map(user => {
-        const displayName = user.nickname || user.name;
-        // Tenta achar pelo apelido ou pelo nome completo
-        const plate = driverPlates[displayName] || driverPlates[user.name] || '-';
-        const isActive = driverActivity[displayName] || driverActivity[user.name];
-        const lastSeen = lastDate[displayName] || lastDate[user.name] || null;
-
-        return {
-          name: user.name,
-          email: user.email,
-          location: user.location || 'Não informado',
-          plate: plate,
-          active: isActive,
-          lastSeen: lastSeen
-        };
-      });
-    }
-
-    // 3. Exibir Modal e Tabela
-    async function showDriversDetails() {
-      // Se não tiver dados em cache, tenta buscar uma única vez
-      if (!cachedUsersList) {
-        showToast("Carregando lista de condutores...", "warning");
-        await fetchDriverStats();
-        
-        // Se mesmo após tentar buscar, continuar vazio (por erro), para a execução
-        if (!cachedUsersList) {
-            showToast("Não foi possível carregar os condutores. Verifique as permissões.", "error");
-            return;
-        }
-      }
-
-      const tbody = document.getElementById('drivers-list-tbody');
-      const data = getProcessedDriversData();
-      
-
-      tbody.innerHTML = data.map(d => {
-        // Formatação da data se existir
-        let dataTexto = 'Recente';
-        if (d.lastSeen) {
-            const parts = d.lastSeen.split('-');
-            if (parts.length === 3) dataTexto = `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-
-        const statusBadge = d.active 
-          ? `<span class="status-badge status-enviado">Ativo (${dataTexto})</span>` 
-          : '<span class="status-badge" style="background:#f3f4f6; color:#6b7280;">Sem registros</span>';
-        
-        const plateStyle = d.plate !== '-' ? 'font-weight:600; color:#253d70;' : 'color:#9ca3af; font-style:italic;';
-
-        return `
-          <tr>
-            <td>
-              <strong>${d.name}</strong>
-              <div style="font-size:0.75rem; color:#64748b;">${d.email}</div>
-            </td>
-            <td>${d.location}</td>
-            <td style="text-align:center; ${plateStyle}">${d.plate}</td>
-            <td>${statusBadge}</td>
-          </tr>
-        `;
-      }).join('');
-
-      document.getElementById('drivers-details-modal').classList.remove('hidden');
-    }
-
-    // 4. Exportar para Excel
-    function exportDriversToExcel() {
-      const data = getProcessedDriversData();
-      if (data.length === 0) { showToast('Sem dados para exportar', 'error'); return; }
-
-      let htmlContent = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            th { background-color: #253d70; color: white; border: 1px solid #000; padding: 5px; }
-            td { border: 1px solid #ccc; padding: 5px; }
-          </style>
-        </head>
-        <body>
-          <table>
-            <tr><th colspan="5" style="font-size:14px;">RELAÇÃO DE CONDUTORES CADASTRADOS</th></tr>
-            <tr>
-              <th>Nome Completo</th>
-              <th>Email</th>
-              <th>Lotação</th>
-              <th>Última Placa</th>
-              <th>Status</th>
-            </tr>
-            ${data.map(d => `
-              <tr>
-                <td>${d.name}</td>
-                <td>${d.email}</td>
-                <td>${d.location}</td>
-                <td style="text-align:center;">${d.plate}</td>
-                <td style="text-align:center;">${d.active ? 'Ativo' : 'Inativo'}</td>
-              </tr>
-            `).join('')}
-          </table>
-        </body></html>`;
-
-      const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `condutores_cadastrados_${new Date().toISOString().split('T')[0]}.xls`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    // 5. Exportar para HTML (Relatório Bonito)
-    function exportDriversToHTML() {
-      const data = getProcessedDriversData();
-      if (data.length === 0) { showToast('Sem dados para exportar', 'error'); return; }
-
-      const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 640 640" fill="#253d70"><path d="M541.9 139.5C546.4 127.7 543.6 114.3 534.7 105.4C525.8 96.5 512.4 93.6 500.6 98.2L84.6 258.2C71.9 263 63.7 275.2 64 288.7C64.3 302.2 73.1 314.1 85.9 318.3L262.7 377.2L321.6 554C325.9 566.8 337.7 575.6 351.2 575.9C364.7 576.2 376.9 568 381.8 555.4L541.8 139.4z"/></svg>`;
-
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-          <meta charset="UTF-8">
-          <title>Relatório de Condutores</title>
-          <style>
-            body { font-family: 'Segoe UI', sans-serif; padding: 40px; max-width: 1000px; margin: 0 auto; background: #f8fafc; color: #333; }
-            .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-            .header { display: flex; align-items: center; gap: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
-            .title h1 { margin: 0; color: #1e293b; font-size: 22px; }
-            .title p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; }
-            thead { background: #1e293b; color: white; }
-            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
-            .badge { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-            .ativo { background: #dcfce7; color: #166534; }
-            .inativo { background: #f1f5f9; color: #64748b; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              ${logoSvg}
-              <div class="title">
-                <h1>Relatório de Condutores Cadastrados</h1>
-                <p>SEMCAS - Coordenação de Suporte e Logística</p>
-              </div>
-            </div>
-            <table>
-              <thead>
-                <tr><th>Nome</th><th>Email</th><th>Lotação</th><th>Última Placa</th><th>Status</th></tr>
-              </thead>
-              <tbody>
-                ${data.map(d => `
-                  <tr>
-                    <td><b>${d.name}</b></td>
-                    <td>${d.email}</td>
-                    <td>${d.location}</td>
-                    <td style="text-align:center">${d.plate}</td>
-                    <td><span class="badge ${d.active ? 'ativo' : 'inativo'}">${d.active ? 'Ativo' : 'Sem registro'}</span></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </body></html>`;
-
-      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `relatorio_condutores_${new Date().toISOString().split('T')[0]}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-    // Inicialização do sistema com Splash Screen
-    document.addEventListener('DOMContentLoaded', function() {
-      
-      // 1. Inicia a lógica do App normalmente
-      initializeApp();
-
-      // 2. Controla a tela de abertura (Splash Screen)
-      // O CSS já esconde ela se for navegador comum.
-      // Se for App Instalado, ela aparece, e nós removemos após 2.5 segundos.
-      setTimeout(() => {
-        const splash = document.getElementById('app-splash');
-        if(splash) {
-          // Adiciona a classe que faz sumir (fade-out)
-          splash.classList.add('hidden');
-          
-          // Remove o elemento do HTML logo depois para liberar memória
-          setTimeout(() => { 
-            splash.remove(); 
-          }, 500);
-        }
-      }, 2500); // 2500ms = 2.5 segundos de animação
-    });
-
-  </script>
-</body>
-</html>
+            <div class="dashboard-card" style="flex-direction: column; align-items
