@@ -2701,7 +2701,6 @@
         <th>Ações</th>
        </tr>
       </thead>
-      </thead>
       <tbody id="records-tbody">
        <tr>
         <td colspan="10" class="empty-state">
@@ -3045,7 +3044,7 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
       document.getElementById('logout-btn').addEventListener('click', handleLogout);
       document.getElementById('manager-logout-btn').addEventListener('click', handleLogout);
 
-      document.getElementById('btn-send-direct').addEventListener('click', handleSendDirect);
+    
       document.getElementById('btn-add-queue').addEventListener('click', handleAddToQueue);
       document.getElementById('btn-send-selected').addEventListener('click', handleSendSelected);
       document.getElementById('btn-clear-all').addEventListener('click', handleClearAll);
@@ -3353,38 +3352,7 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
       document.getElementById('destino').focus();
     }
 
-    async function handleSendDirect() {
-      if (isProcessing) return;
-
-      let formData = getFormData();
-      if (!formData) return;
-
-      isProcessing = true;
-      const btn = document.getElementById('btn-send-direct');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<div class="spinner"></div> Enviando...';
-      btn.disabled = true;
-
-      formData.status = 'Enviado'; 
-      
-      const newRecord = await addRecordToFirestore(formData);
-      
-      if (newRecord) {
-        renderTable();
-        updateSelectAllCheckbox();
-        if (currentUser && currentUser.type === 'gestor') {
-          updateManagerDashboard();
-        }
-        showToast('Registro enviado com sucesso!', 'success');
-        clearForm();
-      } else {
-        showToast('Erro ao enviar registro', 'error');
-      }
-
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      isProcessing = false;
-    }
+  
 
     async function handleAddToQueue() {
       if (isProcessing) return;
@@ -3558,11 +3526,6 @@ const recordsSnapshot = await recordsQuery.get(); // Limitar carga inicial
             <td><small>${responsavel}</small></td>
             <td style="text-align:center;">${editButton}</td>
           </tr>
-        `;
-      }).join('');
-
-      updateSendButton();
-    }
         `;
       }).join('');
 
@@ -5129,9 +5092,6 @@ fetchDriverStats();
         window.currentStatsModal.remove();
         window.currentStatsModal = null;
       }
-    }
-    function showStorageStats() {
-      showToast('Estatísticas agora são gerenciadas pelo Firebase', 'success');
     }
     
     function filterAnalyticsByPeriod(period) {
